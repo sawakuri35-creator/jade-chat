@@ -1,34 +1,18 @@
 <script>
 
-/* ========= 意味リンク強化 ========= */
+/* =========================
+   意味リンク
+========================= */
 
 const SEMANTIC_LINKS = {
-  "歌う": [
-    "歌",
-    "歌う",
-    "カラオケ",
-    "karaoke",
-    "音楽",
-    "曲",
-    "歌った",
-    "歌って",
-    "歌い",
-    "歌声"
-  ],
-
-  "料理": [
-    "料理",
-    "自炊",
-    "レシピ",
-    "作った",
-    "作る",
-    "ご飯",
-    "キッチン"
-  ]
+  "歌う": ["歌","歌う","カラオケ","音楽","曲","歌った","歌って"],
+  "料理": ["料理","自炊","レシピ","作る","ご飯"]
 };
 
 
-/* ========= 想起ロジック（修正版） ========= */
+/* =========================
+   記憶検索
+========================= */
 
 function recallFromText(userText){
 
@@ -38,7 +22,6 @@ function recallFromText(userText){
 
     if(item.type !== "like") continue;
 
-    // ▼ 強化：意味リンク検索
     const links = SEMANTIC_LINKS[item.value] || [];
 
     for(const key of links){
@@ -47,13 +30,29 @@ function recallFromText(userText){
       }
     }
 
-    // 本体一致
     if(text.includes(item.value)){
       return item;
     }
   }
 
   return null;
+}
+
+
+/* =========================
+   応答生成（ここが追加）
+========================= */
+
+function generateReply(userText){
+
+  const recalled = recallFromText(userText);
+
+  if(recalled){
+    return `……そういえば、ラティスは「${recalled.value}」が好きでしたね。
+……なるほど。もう少し聞かせてください。`;
+  }
+
+  return "……承知しました。続けてください、ラティス。";
 }
 
 </script>
