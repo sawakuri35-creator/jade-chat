@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ジェイドと会話</title>
 
   <style>
@@ -47,11 +47,12 @@
     }
 
     .debug{
-      background:#111827;
-      border:1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.92);
       margin-right:auto;
-      opacity:0.9;
-      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
     }
 
     #inputArea{
@@ -59,11 +60,13 @@
       left: 0;
       right: 0;
       bottom: 0;
+
       display:flex;
       gap: 8px;
       padding:10px;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
       background:#020617;
+
       box-sizing: border-box;
       border-top: 1px solid rgba(255,255,255,0.08);
     }
@@ -92,31 +95,161 @@
     button:active{
       transform: scale(0.98);
     }
+
+    #topBar{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      backdrop-filter: blur(8px);
+      background: rgba(2,6,23,0.65);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 12px;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+    }
+
+    #toggles{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      color: rgba(255,255,255,0.92);
+    }
+
+    .chip button{
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      background: rgba(16,185,129,0.9);
+    }
+
+    .chip button.danger{
+      background: rgba(239,68,68,0.9);
+    }
+
+    .chip input[type="checkbox"]{
+      transform: scale(1.1);
+      accent-color: #10b981;
+    }
+
+    .small{
+      opacity: 0.85;
+      font-size: 12px;
+    }
   </style>
 </head>
 
 <body>
+  <div id="topBar">
+    <div class="small">Jade Chat / 記憶システム優先</div>
+    <div id="toggles">
+      <label class="chip">
+        <input id="debugToggle" type="checkbox" />
+        debug
+      </label>
+      <span class="chip">
+        memory: <span id="memoryCount">0</span>
+      </span>
+      <span class="chip">
+        rel: <span id="relLabel">C</span>
+      </span>
+      <span class="chip">
+        mode: <span id="modeLabel">FREE</span>
+      </span>
+      <span class="chip">
+        <button id="clearMemoryBtn" class="danger" type="button">記憶を消す</button>
+      </span>
+    </div>
+  </div>
+
   <div id="chat"></div>
 
   <div id="inputArea">
-    <input id="text" placeholder="ラティス…？" autocomplete="off">
+    <input id="text" placeholder="ラティス…？" autocomplete="off" />
     <button id="sendBtn" type="button">送信</button>
   </div>
 
   <script>
-    /***********************
+    /**********************
      * 設定
-     ***********************/
-    const MODE = "FREE";          // API無しの無料モード
-    const DEBUG = true;           // デバッグ表示（消したい時は false）
-    const USER_NAME = "ラティス"; // 呼び名固定
+     **********************/
+    const APP_VERSION = "mem-v2.0";
+    const MODE = "FREE"; // 今は無料モード（AI APIは使わない）
+    const REL_STAGE = "C"; // 関係値（今は表示だけ）
 
-    /***********************
-     * UI
-     ***********************/
+    // localStorage keys
+    const LS_KEY_MEMORY = "jadeChat.memoryItems";
+    const LS_KEY_TURNS = "jadeChat.turns";
+    const LS_KEY_DEBUG = "jadeChat.debug";
+
+    /**********************
+     * DOM
+     **********************/
     const chat = document.getElementById("chat");
     const input = document.getElementById("text");
     const sendBtn = document.getElementById("sendBtn");
+    const debugToggle = document.getElementById("debugToggle");
+    const clearMemoryBtn = document.getElementById("clearMemoryBtn");
+    const memoryCountEl = document.getElementById("memoryCount");
+    const relLabelEl = document.getElementById("relLabel");
+    const modeLabelEl = document.getElementById("modeLabel");
+
+    relLabelEl.textContent = REL_STAGE;
+    modeLabelEl.textContent = MODE;
+
+    /**********************
+     * ユーティリティ
+     **********************/
+    function nowIso(){
+      return new Date().toISOString();
+    }
+
+    function safeJsonParse(str, fallback){
+      try { return JSON.parse(str); } catch(e) { return fallback; }
+    }
+
+    function loadTurns(){
+      const n = Number(localStorage.getItem(LS_KEY_TURNS) || "0");
+      return Number.isFinite(n) ? n : 0;
+    }
+    function saveTurns(n){
+      localStorage.setItem(LS_KEY_TURNS, String(n));
+    }
+
+    function loadMemory(){
+      const arr = safeJsonParse(localStorage.getItem(LS_KEY_MEMORY) || "[]", []);
+      return Array.isArray(arr) ? arr : [];
+    }
+    function saveMemory(items){
+      localStorage.setItem(LS_KEY_MEMORY, JSON.stringify(items));
+      updateMemoryCount();
+    }
+
+    function updateMemoryCount(){
+      const items = loadMemory();
+      memoryCountEl.textContent = String(items.length);
+    }
+
+    function isDebug(){
+      return debugToggle.checked;
+    }
+
+    function setDebug(v){
+      debugToggle.checked = !!v;
+      localStorage.setItem(LS_KEY_DEBUG, v ? "1" : "0");
+    }
 
     function addMessage(text, type){
       const div = document.createElement("div");
@@ -127,369 +260,239 @@
     }
 
     function addDebug(text){
-      if(!DEBUG) return;
-      addMessage("[debug] " + text, "debug");
+      if(!isDebug()) return;
+      addMessage(text, "debug");
     }
 
-    /***********************
-     * 永続データ（localStorage）
-     ***********************/
-    const KEY_TURNS = "jade_turns";
-    const KEY_REL   = "jade_rel";      // "C" -> "D"
-    const KEY_MEM   = "jade_memory_v1"; // 記憶（配列）
-
-    function loadTurns(){
-      const n = parseInt(localStorage.getItem(KEY_TURNS) || "0", 10);
-      return Number.isFinite(n) ? n : 0;
-    }
-    function saveTurns(n){
-      localStorage.setItem(KEY_TURNS, String(n));
-    }
-
-    function loadRel(){
-      return localStorage.getItem(KEY_REL) || "C";
-    }
-    function saveRel(rel){
-      localStorage.setItem(KEY_REL, rel);
-    }
-
-    function loadMemory(){
-      try{
-        const raw = localStorage.getItem(KEY_MEM);
-        if(!raw) return [];
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? arr : [];
-      }catch(e){
-        return [];
-      }
-    }
-    function saveMemory(mem){
-      localStorage.setItem(KEY_MEM, JSON.stringify(mem));
-    }
-
-    // 記憶の1件
-    // { id, kind, text, keywords:[], ts, score }
-
-    function nowTs(){
-      return Date.now();
-    }
-
-    function normalize(s){
+    /**********************
+     * 記憶抽出（最重要）
+     * - 「好き」を誤保存しない
+     **********************/
+    function normalizeJapaneseText(s){
       return (s || "")
-        .toLowerCase()
-        .replace(/[！!？?。．、,\s]/g, "")
+        .replace(/\s+/g, " ")
+        .replace(/　/g, " ")
         .trim();
     }
 
-    function uniq(arr){
-      return Array.from(new Set(arr));
+    // 質問・確認っぽいものは保存しない（末尾や語尾）
+    function looksLikeQuestion(s){
+      const t = normalizeJapaneseText(s);
+      // ? / ？ / 「〜？」 / 「〜ですか」 / 「〜かな」 / 「覚えてる」など
+      if (/[?？]\s*$/.test(t)) return true;
+      if (/(ですか|ますか|かな|かしら|覚えてる|覚えてる？|覚えてるか|覚えてるの|知ってる|知ってる？)\s*$/.test(t)) return true;
+      // 文中に「？」がある
+      if (/[?？]/.test(t)) return true;
+      return false;
     }
 
-    /***********************
-     * 記憶抽出：ユーザー発言から「好き/苦手/覚えて」を拾う
-     ***********************/
-    function extractMemoriesFromUser(text){
-      const t = (text || "").trim();
-      const memories = [];
+    // 断定の「好き」だけを抽出する
+    // 例:
+    //  - 「歌うのが好き」 → "歌うの"
+    //  - 「料理好き」 → "料理"
+    //  - 「私はジャズが好きです」 → "ジャズ"
+    // NG:
+    //  - 「好き？」 「好きなこと覚えてる？」 「好きなの？」 → 保存しない
+    function extractLikeItem(userText){
+      const t0 = normalizeJapaneseText(userText);
 
-      // 1) 「〜が好き」「好きな〜」「〜好き」
-      //   例: "歌うのが好き" / "料理するのも好き" / "甘いもの好き"
-      //   「好き」だけでなく「大好き」も拾う
-      const likeRegexList = [
-        /(.+?)が(とても)?(大)?好き/g,
-        /(.+?)するのも(とても)?(大)?好き/g,
-        /(とても)?(大)?好きな(.+?)(です|だ|。|！|!|$)/g,
-        /(.+?)好き(です|だ|。|！|!|$)/g
-      ];
+      // まず質問は弾く
+      if (!t0) return null;
+      if (looksLikeQuestion(t0)) return null;
 
-      for(const r of likeRegexList){
-        let m;
-        while((m = r.exec(t)) !== null){
-          // パターンにより取り出す位置が違うので調整
-          let phrase = "";
-          if(r.source.includes("好きな")){
-            phrase = m[3] || "";
-          }else{
-            phrase = m[1] || "";
-          }
-          phrase = phrase.replace(/[「」『』"']/g,"").trim();
-          if(phrase && phrase.length <= 30){
-            memories.push({
-              kind: "like",
-              text: `${USER_NAME}は「${phrase}」が好き`,
-              keywords: keywordsFromPhrase(phrase).concat(["好き"])
-            });
-          }
-        }
-      }
-
-      // 2) 苦手
-      const dislikeRegex = /(.+?)が苦手(です|だ|。|！|!|$)/g;
-      {
-        let m;
-        while((m = dislikeRegex.exec(t)) !== null){
-          let phrase = (m[1] || "").replace(/[「」『』"']/g,"").trim();
-          if(phrase && phrase.length <= 30){
-            memories.push({
-              kind: "dislike",
-              text: `${USER_NAME}は「${phrase}」が苦手`,
-              keywords: keywordsFromPhrase(phrase).concat(["苦手"])
-            });
-          }
-        }
-      }
-
-      // 3) 「覚えて」「覚えといて」「メモ」明示
-      const rememberRegex = /(覚えて|覚えといて|メモ|記憶して)(.+?)(。|！|!|$)/;
-      {
-        const m = t.match(rememberRegex);
-        if(m){
-          const phrase = (m[2] || "").replace(/[「」『』"']/g,"").trim();
-          if(phrase && phrase.length <= 50){
-            memories.push({
-              kind: "note",
-              text: `${USER_NAME}のメモ：${phrase}`,
-              keywords: keywordsFromPhrase(phrase).concat(["メモ","覚える"])
-            });
-          }
-        }
-      }
-
-      // 重複を除外（同じtextは1件に）
-      const seen = new Set();
-      const out = [];
-      for(const it of memories){
-        const key = it.text;
-        if(seen.has(key)) continue;
-        seen.add(key);
-        out.push(it);
-      }
-      return out;
-    }
-
-    function keywordsFromPhrase(phrase){
-      // 雑にキーワード化（ひらがな1文字は落とす）
-      const p = (phrase || "")
-        .replace(/[^\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}a-zA-Z0-9]/gu, " ")
+      // 余計な主語などを軽く落とす（完全ではなく安全側）
+      // 例: 「私は」「俺は」「ラティスは」など
+      const t = t0
+        .replace(/^(私は|俺は|ぼくは|僕は|ラティスは|ラティス、|ラティスは、)\s*/,"")
         .trim();
-      const parts = p.split(/\s+/).filter(Boolean);
 
-      // 日本語は分かち書き難しいので、長めの塊をそのまま使う + 2文字以上のみ
-      const filtered = parts
-        .map(x => x.trim())
-        .filter(x => x.length >= 2 && x.length <= 20);
+      // 「好きじゃない」「嫌い」など否定は今は保存しない（誤爆防止）
+      if (/(好きじゃない|好きではない|嫌い|苦手)/.test(t)) return null;
 
-      return uniq(filtered.map(normalize)).filter(Boolean);
-    }
-
-    function upsertMemories(newItems){
-      const mem = loadMemory();
-      const map = new Map(mem.map(m => [m.text, m]));
-      for(const item of newItems){
-        const existing = map.get(item.text);
-        if(existing){
-          // 既存があれば強化
-          existing.ts = nowTs();
-          existing.score = (existing.score || 1) + 1;
-          existing.keywords = uniq((existing.keywords || []).concat(item.keywords || []));
-          map.set(item.text, existing);
-        }else{
-          map.set(item.text, {
-            id: "m_" + Math.random().toString(16).slice(2),
-            kind: item.kind || "note",
-            text: item.text,
-            keywords: uniq(item.keywords || []),
-            ts: nowTs(),
-            score: 1
-          });
-        }
-      }
-      const out = Array.from(map.values())
-        // 新しい/重要な順
-        .sort((a,b) => (b.score - a.score) || (b.ts - a.ts))
-        // 記憶が増えすぎないよう上限（必要なら増やせる）
-        .slice(0, 40);
-
-      saveMemory(out);
-      return out;
-    }
-
-    /***********************
-     * 記憶の「想起」：今の発言に関連する記憶を返す
-     ***********************/
-    function recallMemory(userText, max = 2){
-      const mem = loadMemory();
-      if(mem.length === 0) return [];
-
-      const tNorm = normalize(userText);
-      if(!tNorm) return [];
-
-      // 発言に含まれるキーワードっぽい塊
-      const tokens = keywordsFromPhrase(userText);
-      const tokenSet = new Set(tokens.map(normalize));
-
-      // ざっくりスコアリング
-      const scored = mem.map(m => {
-        let s = 0;
-
-        // キーワード一致
-        for(const kw of (m.keywords || [])){
-          if(!kw) continue;
-          if(tokenSet.has(normalize(kw))) s += 3;
-          // 発言の中に含まれている
-          if(tNorm.includes(normalize(kw))) s += 1;
-        }
-
-        // 直近・重要度
-        s += Math.min((m.score || 1), 5) * 0.3;
-
-        // 直近ボーナス（ざっくり）
-        const age = (nowTs() - (m.ts || nowTs()));
-        if(age < 1000 * 60 * 60 * 6) s += 0.8;       // 6時間以内
-        else if(age < 1000 * 60 * 60 * 24) s += 0.4; // 24時間以内
-
-        return { m, s };
-      })
-      .filter(x => x.s >= 3) // 閾値（必要なら調整）
-      .sort((a,b) => b.s - a.s);
-
-      return scored.slice(0, max).map(x => x.m);
-    }
-
-    /***********************
-     * FREEジェイド生成（ローカル）
-     ***********************/
-    function jadeStylePrefix(rel){
-      // 関係ステージで少しだけ温度感を変える（甘くしすぎない）
-      if(rel === "D"){
-        return "……ラティス。";
-      }
-      return "……なるほど。";
-    }
-
-    function makeJadeReply(userText, rel){
-      const t = (userText || "").trim();
-
-      // 記憶を抽出して保存
-      const extracted = extractMemoriesFromUser(t);
-      if(extracted.length > 0){
-        upsertMemories(extracted);
+      // パターン1: 「Xが好き」「Xが好きです」「Xが好きだ」
+      // X は 1〜40文字くらい、ただし短すぎ/長すぎ除外
+      let m = t.match(/^(.{1,40}?)が好き(です|だ|。\s*|！\s*|!\s*|$)/);
+      if (m && m[1]) {
+        const item = cleanupLikeTarget(m[1]);
+        if (isGoodMemoryValue(item)) return item;
       }
 
-      // 今の話題に関連する記憶を想起
-      const recalled = recallMemory(t, 2);
-
-      // 返答の骨格
-      let lines = [];
-
-      // 想起があれば、まず「思い出す」一言を入れる（押し付けない）
-      if(recalled.length > 0){
-        // 1つ目だけ軽く触れる（多すぎると不自然）
-        const r0 = recalled[0].text;
-        // r0: "ラティスは「歌うの」が好き" みたいな文
-        lines.push(`……そういえば、${r0.replace(USER_NAME + "は", USER_NAME + "は").replace("ラティスのメモ：","あなたのメモとして、") }。`);
+      // パターン2: 「X好き」「X好きです」
+      m = t.match(/^(.{1,40}?)好き(です|だ|。\s*|！\s*|!\s*|$)/);
+      if (m && m[1]) {
+        const item = cleanupLikeTarget(m[1]);
+        if (isGoodMemoryValue(item)) return item;
       }
 
-      // 発言タイプ別の返答
-      // 質問
-      const isQuestion = /[？?]$/.test(t) || /覚えてる|覚えてる\?|覚えてますか|覚えてる？/.test(t);
-      if(isQuestion){
-        if(/覚えて/.test(t)){
-          if(recalled.length > 0){
-            lines.push("ええ。記憶は残っています。");
-          }else{
-            lines.push("今のところ、関連する記憶が見当たりません。もう少し手がかりを。");
-          }
-        }else{
-          lines.push("質問の意図は理解しました。もう少し前提条件を教えてください、ラティス。");
-        }
-      }else{
-        // 好き/苦手を言った直後は受け止める
-        if(/好き/.test(t)){
-          lines.push(`${jadeStylePrefix(rel)}興味深いですね。どういうところが気に入っています？`);
-        }else if(/苦手/.test(t)){
-          lines.push(`${jadeStylePrefix(rel)}理由があるのでしょう。差し支えなければ聞かせてください。`);
-        }else{
-          // 雑談
-          lines.push(`${jadeStylePrefix(rel)}続けてください、ラティス。`);
+      // パターン3: 「好き：X」「好きはX」みたいな書き方
+      m = t.match(/^好き[:：は]\s*(.{1,40})$/);
+      if (m && m[1]) {
+        const item = cleanupLikeTarget(m[1]);
+        if (isGoodMemoryValue(item)) return item;
+      }
+
+      return null;
+    }
+
+    function cleanupLikeTarget(x){
+      return normalizeJapaneseText(x)
+        .replace(/[。！!？?]$/g,"")
+        .replace(/^(こと|もの|の)\s*/,"")      // 「こと」「もの」「の」だけの曖昧を減らす
+        .replace(/\s*(かな|かも|だと思う|と思ってる|です)\s*$/,"")
+        .trim();
+    }
+
+    function isGoodMemoryValue(x){
+      if (!x) return false;
+      // あまりに短い/意味が薄いものは弾く
+      if (x.length < 2) return false;
+      // 「好き」そのもの、質問語系は弾く
+      if (/^(好き|こと|もの|覚えてる|知ってる)$/.test(x)) return false;
+      return true;
+    }
+
+    function upsertMemoryLike(value){
+      const items = loadMemory();
+      const exists = items.some(it => it && it.type==="like" && it.value===value);
+      if (exists) return { added:false };
+
+      const newItem = {
+        id: cryptoRandomId(),
+        type: "like",
+        value,
+        createdAt: nowIso()
+      };
+      items.push(newItem);
+      saveMemory(items);
+      return { added:true, item:newItem };
+    }
+
+    function cryptoRandomId(){
+      // iOSでも動く軽量ID
+      const arr = new Uint8Array(8);
+      (crypto || window.msCrypto).getRandomValues(arr);
+      return Array.from(arr).map(b => b.toString(16).padStart(2,"0")).join("");
+    }
+
+    function memorySummaryText(){
+      const items = loadMemory().filter(it => it && it.type==="like");
+      if (!items.length) return "（記憶なし）";
+      // 最大5件だけ表示（増えすぎ防止）
+      const top = items.slice(-5).map(it => `・${it.value}`).join("\n");
+      const more = items.length > 5 ? `\n…ほか${items.length - 5}件` : "";
+      return `【記憶（好き）】\n${top}${more}`;
+    }
+
+    /**********************
+     * FREEモード返信（仮）
+     * - 記憶が正しく動いているか確認できることを優先
+     **********************/
+    function freeModeReply(userText){
+      const like = extractLikeItem(userText);
+      if (like) {
+        const r = upsertMemoryLike(like);
+        if (r.added) {
+          return [
+            `……そういえば、ラティスは「${like}」が好き。`,
+            "記憶に追加しました。",
+            "",
+            "……なるほど。どういうところが気に入っています？"
+          ].join("\n");
+        } else {
+          return [
+            `……ええ。「${like}」は、すでに記憶しています。`,
+            "",
+            "……最近はいつ頃それに触れました？"
+          ].join("\n");
         }
       }
 
-      // rel=D なら最後にほんの少しだけ柔らかく（過度な甘さは避ける）
-      if(rel === "D"){
-        if(Math.random() < 0.35){
-          lines.push("あなたの話は、思った以上に整理が進みます。");
-        }
+      // 「覚えてる？」の類は、記憶の中身を要約で返す（ここがBの肝）
+      if (/覚えてる|覚えていますか|記憶/.test(userText)) {
+        return [
+          "……確認ですね。",
+          memorySummaryText(),
+          "",
+          "他にも、覚えておいてほしい「好き」を一文で教えてください。",
+          "（例：『紅茶が好き』）"
+        ].join("\n");
       }
 
-      return lines.join("\n");
+      // 通常時：記憶のガイドに寄せる
+      return [
+        "……了解しました。",
+        "記憶を正確に積み上げたいので、あなたの情報は『断定の一文』で教えてください。",
+        "（例：『歌うのが好き』『料理が好き』）",
+        "",
+        "今、何を記憶させたいですか？"
+      ].join("\n");
     }
 
-    /***********************
+    /**********************
      * 送信処理
-     ***********************/
+     **********************/
     function send(){
-      const text = input.value.trim();
+      const text = normalizeJapaneseText(input.value);
       if(!text) return;
+
+      // turns++
+      const turns = loadTurns() + 1;
+      saveTurns(turns);
 
       addMessage(text, "user");
       input.value = "";
 
-      // turns 更新（ユーザーの発言を1ターンとして加算）
-      let turns = loadTurns();
-      turns += 1;
-      saveTurns(turns);
-
-      // rel 更新（例：12ターン以上でDへ）
-      let rel = loadRel();
-      if(rel === "C" && turns >= 12){
-        rel = "D";
-        saveRel(rel);
-      }else{
-        saveRel(rel);
+      // 記憶抽出ログ
+      const extracted = extractLikeItem(text);
+      if (extracted) {
+        addDebug(`[debug] extractLikeItem = "${extracted}"`);
+      } else {
+        addDebug(`[debug] extractLikeItem = null`);
       }
 
-      addDebug(`記憶ロードOK / rel=${rel} / turns=${turns} / mode=${MODE}`);
+      // 返信
+      const reply = freeModeReply(text);
+      addMessage(reply, "jade");
 
-      // FREE応答（少し間を置く）
-      setTimeout(() => {
-        try{
-          const reply = makeJadeReply(text, rel);
-          addMessage(reply, "jade");
-        }catch(e){
-          addMessage("……予期しない問題が起きました。少し時間を置いてください。", "jade");
-          addDebug("exception=" + (e && e.message ? e.message : String(e)));
-        }
-      }, 380);
+      // 状態ログ
+      addDebug(`[debug] 記憶ロードOK / rel=${REL_STAGE} / turns=${turns} / mode=${MODE}`);
+      updateMemoryCount();
     }
 
-    // 送信ボタン
-    sendBtn.addEventListener("click", send);
+    /**********************
+     * 起動
+     **********************/
+    // debug状態復元
+    setDebug(localStorage.getItem(LS_KEY_DEBUG)==="1");
 
-    // Enterで送信
+    // UIイベント
+    sendBtn.addEventListener("click", send);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        e.preventDefault()
+        e.preventDefault();
         send();
       }
     });
 
-    /***********************
-     * 起動時
-     ***********************/
-    (function boot(){
-      const turns = loadTurns();
-      const rel = loadRel();
-      const mem = loadMemory();
+    clearMemoryBtn.addEventListener("click", () => {
+      const ok = confirm("記憶（ローカル保存）を全消去します。よろしいですか？");
+      if(!ok) return;
+      localStorage.removeItem(LS_KEY_MEMORY);
+      updateMemoryCount();
+      addDebug("[debug] memory cleared");
+      addMessage("……記憶を消去しました。", "jade");
+    });
 
-      addMessage("ジェイドが静かにこちらを見ている。", "jade");
-      addDebug(`起動OK / memoryItems=${mem.length} / rel=${rel} / turns=${turns} / mode=${MODE}`);
+    debugToggle.addEventListener("change", () => {
+      setDebug(debugToggle.checked);
+      addMessage(`……debug表示を ${debugToggle.checked ? "ON" : "OFF"} にしました。`, "jade");
+    });
 
-      // もしDに到達してたら、さりげなく空気を変える（演出）
-      if(rel === "D"){
-        addMessage("……来ましたね、ラティス。", "jade");
-      }
-    })();
+    updateMemoryCount();
+
+    // 起動メッセージ
+    addMessage("ジェイドが静かにこちらを見ている。", "jade");
+    addDebug(`[debug] 起動OK / memoryItems=${loadMemory().length} / rel=${REL_STAGE} / turns=${loadTurns()} / mode=${MODE} / ver=${APP_VERSION}`);
   </script>
 </body>
 </html>
