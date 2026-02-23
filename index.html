@@ -6,53 +6,133 @@
   <title>ジェイドと会話</title>
 
   <style>
+    :root{
+      --bg:#0b1224;
+      --panel:#0f1a33;
+      --panel2:#0b1730;
+      --user:#2563eb;
+      --jade:#1e293b;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#10b981;
+      --border:rgba(255,255,255,0.10);
+    }
+
     body{
       margin:0;
       font-family:-apple-system, system-ui, sans-serif;
-      background:#0f172a;
-      color:white;
+      background:linear-gradient(180deg, #0a1020, #070b16);
+      color:var(--text);
+      height:100vh;
       display:flex;
       flex-direction:column;
-      height:100vh;
       padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Top bar */
+    #topbar{
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:rgba(10,16,32,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+      padding:10px 12px;
+    }
+    #titleRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    #appTitle{
+      font-weight:700;
+      letter-spacing:0.5px;
+      font-size:16px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    #appTitle small{
+      font-weight:600;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    #pills{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.05);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--text);
+      user-select:none;
+    }
+    .pill b{ font-weight:700; }
+    .pill .muted{ color:var(--muted); }
+
+    /* Debug toggle */
+    #debugToggle{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+    }
+    #debugToggle input{
+      width:18px;
+      height:18px;
     }
 
     #chat{
       flex:1;
       overflow-y:auto;
-      padding:15px;
-      padding-bottom: 140px;
-      box-sizing: border-box;
+      padding:14px 12px;
+      padding-bottom: 170px;
+      box-sizing:border-box;
       -webkit-overflow-scrolling: touch;
     }
 
     .message{
       margin:10px 0;
-      max-width:80%;
-      padding:12px;
-      border-radius:14px;
-      line-height:1.6;
+      max-width:86%;
+      padding:12px 14px;
+      border-radius:16px;
+      line-height:1.7;
       white-space:pre-wrap;
       word-break: break-word;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.20);
     }
 
     .user{
-      background:#2563eb;
+      background:linear-gradient(180deg, #2a68ff, #1f4fd0);
       margin-left:auto;
     }
 
     .jade{
-      background:#1e293b;
+      background:rgba(30,41,59,0.92);
       margin-right:auto;
+      border:1px solid rgba(255,255,255,0.06);
     }
 
     .debug{
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.92);
+      background:rgba(17,24,39,0.78);
       margin-right:auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
+      border:1px dashed rgba(255,255,255,0.18);
+      color:#d1d5db;
+      font-size:12px;
+      box-shadow:none;
     }
 
     #inputArea{
@@ -60,117 +140,88 @@
       left: 0;
       right: 0;
       bottom: 0;
-
       display:flex;
-      gap: 8px;
-      padding:10px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom));
-      background:#020617;
-
+      gap: 10px;
+      padding:12px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      background:rgba(2,6,23,0.96);
+      backdrop-filter: blur(10px);
       box-sizing: border-box;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      border-top: 1px solid var(--border);
     }
 
     input{
       flex:1;
-      padding:12px;
-      border-radius:10px;
-      border:none;
+      padding:14px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(255,255,255,0.06);
+      color:var(--text);
       font-size:16px;
       outline: none;
     }
+    input::placeholder{
+      color:rgba(229,231,235,0.55);
+    }
 
     button{
-      padding:12px 14px;
+      padding:14px 16px;
       border:none;
-      border-radius:10px;
-      background:#10b981;
+      border-radius:14px;
+      background:var(--accent);
       color:white;
       font-size:16px;
-      font-weight:600;
+      font-weight:700;
       cursor:pointer;
       touch-action: manipulation;
+      box-shadow: 0 10px 24px rgba(16,185,129,0.20);
     }
+    button:active{ transform: scale(0.98); }
 
-    button:active{
-      transform: scale(0.98);
-    }
-
-    #topBar{
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      backdrop-filter: blur(8px);
-      background: rgba(2,6,23,0.65);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 10px 12px;
+    /* Small action buttons (topbar) */
+    #actions{
       display:flex;
-      gap: 10px;
-      align-items:center;
-      justify-content: space-between;
-    }
-
-    #toggles{
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-
-    .chip{
-      display:inline-flex;
-      align-items:center;
       gap:8px;
+      align-items:center;
+    }
+    .miniBtn{
       padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.06);
-      font-size: 12px;
-      color: rgba(255,255,255,0.92);
-    }
-
-    .chip button{
-      padding:6px 10px;
-      border-radius:999px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.06);
+      color:var(--text);
       font-size:12px;
-      background: rgba(16,185,129,0.9);
+      font-weight:700;
+      cursor:pointer;
     }
-
-    .chip button.danger{
-      background: rgba(239,68,68,0.9);
-    }
-
-    .chip input[type="checkbox"]{
-      transform: scale(1.1);
-      accent-color: #10b981;
-    }
-
-    .small{
-      opacity: 0.85;
-      font-size: 12px;
-    }
+    .miniBtn:active{ transform:scale(0.98); }
   </style>
 </head>
 
 <body>
-  <div id="topBar">
-    <div class="small">Jade Chat / 記憶システム優先</div>
-    <div id="toggles">
-      <label class="chip">
-        <input id="debugToggle" type="checkbox" />
+  <div id="topbar">
+    <div id="titleRow">
+      <div id="appTitle">
+        Jade Chat <small>／ 記憶システム優先</small>
+      </div>
+
+      <div id="actions">
+        <button class="miniBtn" id="btnClear">記憶クリア</button>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <div id="pills">
+        <span class="pill"><b>memory</b>: <span id="memoryCount">0</span></span>
+        <span class="pill"><b>rel</b>: <span id="relStage">C</span></span>
+        <span class="pill"><b>mode</b>: <span id="modeLabel">FREE</span></span>
+        <span class="pill"><span class="muted">turns</span>: <span id="turnsCount">0</span></span>
+      </div>
+
+      <label id="debugToggle" class="pill" title="デバッグ表示のON/OFF">
+        <input type="checkbox" id="debugChk" />
         debug
       </label>
-      <span class="chip">
-        memory: <span id="memoryCount">0</span>
-      </span>
-      <span class="chip">
-        rel: <span id="relLabel">C</span>
-      </span>
-      <span class="chip">
-        mode: <span id="modeLabel">FREE</span>
-      </span>
-      <span class="chip">
-        <button id="clearMemoryBtn" class="danger" type="button">記憶を消す</button>
-      </span>
     </div>
   </div>
 
@@ -182,73 +233,49 @@
   </div>
 
   <script>
-    /**********************
-     * 設定
-     **********************/
-    const APP_VERSION = "mem-v2.0";
-    const MODE = "FREE"; // 今は無料モード（AI APIは使わない）
-    const REL_STAGE = "C"; // 関係値（今は表示だけ）
+    /***********************
+     * Storage keys
+     ***********************/
+    const KEY_MEMORY = "jadechat_memory_v1";   // array of items
+    const KEY_REL    = "jadechat_rel_v1";      // "C" etc
+    const KEY_TURNS  = "jadechat_turns_v1";    // number
+    const KEY_DEBUG  = "jadechat_debug_v1";    // "1"/"0"
+    const MODE = "FREE"; // free mode (no API)
 
-    // localStorage keys
-    const LS_KEY_MEMORY = "jadeChat.memoryItems";
-    const LS_KEY_TURNS = "jadeChat.turns";
-    const LS_KEY_DEBUG = "jadeChat.debug";
-
-    /**********************
+    /***********************
      * DOM
-     **********************/
+     ***********************/
     const chat = document.getElementById("chat");
     const input = document.getElementById("text");
     const sendBtn = document.getElementById("sendBtn");
-    const debugToggle = document.getElementById("debugToggle");
-    const clearMemoryBtn = document.getElementById("clearMemoryBtn");
     const memoryCountEl = document.getElementById("memoryCount");
-    const relLabelEl = document.getElementById("relLabel");
+    const relStageEl = document.getElementById("relStage");
     const modeLabelEl = document.getElementById("modeLabel");
+    const turnsCountEl = document.getElementById("turnsCount");
+    const debugChk = document.getElementById("debugChk");
+    const btnClear = document.getElementById("btnClear");
 
-    relLabelEl.textContent = REL_STAGE;
-    modeLabelEl.textContent = MODE;
+    /***********************
+     * Utilities
+     ***********************/
+    function nowISO(){ return new Date().toISOString(); }
 
-    /**********************
-     * ユーティリティ
-     **********************/
-    function nowIso(){
-      return new Date().toISOString();
+    function loadJSON(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) return fallback;
+        return JSON.parse(raw);
+      }catch(e){
+        return fallback;
+      }
+    }
+    function saveJSON(key, value){
+      localStorage.setItem(key, JSON.stringify(value));
     }
 
-    function safeJsonParse(str, fallback){
-      try { return JSON.parse(str); } catch(e) { return fallback; }
-    }
-
-    function loadTurns(){
-      const n = Number(localStorage.getItem(LS_KEY_TURNS) || "0");
-      return Number.isFinite(n) ? n : 0;
-    }
-    function saveTurns(n){
-      localStorage.setItem(LS_KEY_TURNS, String(n));
-    }
-
-    function loadMemory(){
-      const arr = safeJsonParse(localStorage.getItem(LS_KEY_MEMORY) || "[]", []);
-      return Array.isArray(arr) ? arr : [];
-    }
-    function saveMemory(items){
-      localStorage.setItem(LS_KEY_MEMORY, JSON.stringify(items));
-      updateMemoryCount();
-    }
-
-    function updateMemoryCount(){
-      const items = loadMemory();
-      memoryCountEl.textContent = String(items.length);
-    }
-
-    function isDebug(){
-      return debugToggle.checked;
-    }
-
-    function setDebug(v){
-      debugToggle.checked = !!v;
-      localStorage.setItem(LS_KEY_DEBUG, v ? "1" : "0");
+    function loadStr(key, fallback){
+      const v = localStorage.getItem(key);
+      return (v === null || v === undefined) ? fallback : v;
     }
 
     function addMessage(text, type){
@@ -259,213 +286,249 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function addDebug(text){
-      if(!isDebug()) return;
+    function debugLog(text){
+      if(!debugChk.checked) return;
       addMessage(text, "debug");
     }
 
-    /**********************
-     * 記憶抽出（最重要）
-     * - 「好き」を誤保存しない
-     **********************/
-    function normalizeJapaneseText(s){
-      return (s || "")
+    function setPills(){
+      const mem = loadMemory();
+      const rel = loadRel();
+      const turns = loadTurns();
+
+      memoryCountEl.textContent = String(mem.length);
+      relStageEl.textContent = rel;
+      modeLabelEl.textContent = MODE;
+      turnsCountEl.textContent = String(turns);
+    }
+
+    /***********************
+     * Memory
+     ***********************/
+    function loadMemory(){
+      return loadJSON(KEY_MEMORY, []);
+    }
+
+    function saveMemory(items){
+      saveJSON(KEY_MEMORY, items);
+      setPills();
+    }
+
+    function loadRel(){
+      const v = loadStr(KEY_REL, "C");
+      return v || "C";
+    }
+
+    function saveRel(rel){
+      localStorage.setItem(KEY_REL, rel);
+      setPills();
+    }
+
+    function loadTurns(){
+      const v = parseInt(loadStr(KEY_TURNS, "0"), 10);
+      return Number.isFinite(v) ? v : 0;
+    }
+
+    function saveTurns(n){
+      localStorage.setItem(KEY_TURNS, String(n));
+      setPills();
+    }
+
+    function normalizeJP(s){
+      if(!s) return "";
+      return s
+        .replace(/[「」『』【】\[\]\(\)（）]/g, "")
+        .replace(/[。．\.！!？\?、,]/g, "")
         .replace(/\s+/g, " ")
-        .replace(/　/g, " ")
         .trim();
     }
 
-    // 質問・確認っぽいものは保存しない（末尾や語尾）
-    function looksLikeQuestion(s){
-      const t = normalizeJapaneseText(s);
-      // ? / ？ / 「〜？」 / 「〜ですか」 / 「〜かな」 / 「覚えてる」など
-      if (/[?？]\s*$/.test(t)) return true;
-      if (/(ですか|ますか|かな|かしら|覚えてる|覚えてる？|覚えてるか|覚えてるの|知ってる|知ってる？)\s*$/.test(t)) return true;
-      // 文中に「？」がある
-      if (/[?？]/.test(t)) return true;
-      return false;
+    function dedupePushMemory(item){
+      const mem = loadMemory();
+      const key = item.kind + ":" + item.value;
+
+      // already exists?
+      const exists = mem.some(x => (x.kind + ":" + x.value) === key);
+      if(exists) return { added:false, mem };
+
+      mem.push(item);
+      saveMemory(mem);
+      return { added:true, mem };
     }
 
-    // 断定の「好き」だけを抽出する
-    // 例:
-    //  - 「歌うのが好き」 → "歌うの"
-    //  - 「料理好き」 → "料理"
-    //  - 「私はジャズが好きです」 → "ジャズ"
-    // NG:
-    //  - 「好き？」 「好きなこと覚えてる？」 「好きなの？」 → 保存しない
+    // Extract "like" from user statement.
+    // Examples:
+    //  - "歌うのが好き"
+    //  - "料理するのも好き"
+    //  - "私は歌うのが好き"
     function extractLikeItem(userText){
-      const t0 = normalizeJapaneseText(userText);
+      const t = normalizeJP(userText);
 
-      // まず質問は弾く
-      if (!t0) return null;
-      if (looksLikeQuestion(t0)) return null;
+      // Exclude questions like "覚えてる？"
+      if (/[?？]$/.test(userText.trim())) return null;
+      if (t.includes("覚えてる")) return null;
 
-      // 余計な主語などを軽く落とす（完全ではなく安全側）
-      // 例: 「私は」「俺は」「ラティスは」など
-      const t = t0
-        .replace(/^(私は|俺は|ぼくは|僕は|ラティスは|ラティス、|ラティスは、)\s*/,"")
-        .trim();
+      // Pattern: Xが好き / Xも好き / Xが好きだ / Xが好きです
+      // We'll capture before "好き"
+      const m = t.match(/^(.{1,30}?)(?:が|も|は)?好き(?:です|だ|)$/);
+      if(m){
+        let subject = m[1] || "";
+        subject = subject.trim();
 
-      // 「好きじゃない」「嫌い」など否定は今は保存しない（誤爆防止）
-      if (/(好きじゃない|好きではない|嫌い|苦手)/.test(t)) return null;
+        // remove leading pronouns
+        subject = subject.replace(/^(私|わたし|ラティス|僕|わたくし)\s*(は|が)?\s*/,"");
+        subject = subject.trim();
 
-      // パターン1: 「Xが好き」「Xが好きです」「Xが好きだ」
-      // X は 1〜40文字くらい、ただし短すぎ/長すぎ除外
-      let m = t.match(/^(.{1,40}?)が好き(です|だ|。\s*|！\s*|!\s*|$)/);
-      if (m && m[1]) {
-        const item = cleanupLikeTarget(m[1]);
-        if (isGoodMemoryValue(item)) return item;
+        // common tail particles cleanup
+        subject = subject.replace(/(する|やる|見る|聴く|聞く)$/,"$1"); // keep verbs
+        subject = subject.replace(/(の|こと)$/,"の"); // unify a bit
+        subject = subject.trim();
+
+        if(subject.length >= 1){
+          return normalizeJP(subject);
+        }
       }
-
-      // パターン2: 「X好き」「X好きです」
-      m = t.match(/^(.{1,40}?)好き(です|だ|。\s*|！\s*|!\s*|$)/);
-      if (m && m[1]) {
-        const item = cleanupLikeTarget(m[1]);
-        if (isGoodMemoryValue(item)) return item;
-      }
-
-      // パターン3: 「好き：X」「好きはX」みたいな書き方
-      m = t.match(/^好き[:：は]\s*(.{1,40})$/);
-      if (m && m[1]) {
-        const item = cleanupLikeTarget(m[1]);
-        if (isGoodMemoryValue(item)) return item;
-      }
-
       return null;
     }
 
-    function cleanupLikeTarget(x){
-      return normalizeJapaneseText(x)
-        .replace(/[。！!？?]$/g,"")
-        .replace(/^(こと|もの|の)\s*/,"")      // 「こと」「もの」「の」だけの曖昧を減らす
-        .replace(/\s*(かな|かも|だと思う|と思ってる|です)\s*$/,"")
-        .trim();
-    }
+    // B: proactive recall
+    function findRecallFromMemory(userText){
+      const mem = loadMemory();
+      if(mem.length === 0) return null;
 
-    function isGoodMemoryValue(x){
-      if (!x) return false;
-      // あまりに短い/意味が薄いものは弾く
-      if (x.length < 2) return false;
-      // 「好き」そのもの、質問語系は弾く
-      if (/^(好き|こと|もの|覚えてる|知ってる)$/.test(x)) return false;
-      return true;
-    }
+      const t = normalizeJP(userText);
+      if(!t) return null;
 
-    function upsertMemoryLike(value){
-      const items = loadMemory();
-      const exists = items.some(it => it && it.type==="like" && it.value===value);
-      if (exists) return { added:false };
+      // If user asks memory directly, don't do proactive recall (we'll handle separately)
+      if (t.includes("覚えてる") || t.includes("覚えている") || t.includes("記憶")) return null;
 
-      const newItem = {
-        id: cryptoRandomId(),
-        type: "like",
-        value,
-        createdAt: nowIso()
-      };
-      items.push(newItem);
-      saveMemory(items);
-      return { added:true, item:newItem };
-    }
+      // Find best match (longer first)
+      const likes = mem.filter(x => x.kind === "like");
+      likes.sort((a,b) => (b.value.length - a.value.length));
 
-    function cryptoRandomId(){
-      // iOSでも動く軽量ID
-      const arr = new Uint8Array(8);
-      (crypto || window.msCrypto).getRandomValues(arr);
-      return Array.from(arr).map(b => b.toString(16).padStart(2,"0")).join("");
-    }
+      for(const item of likes){
+        const v = normalizeJP(item.value);
+        if(!v) continue;
 
-    function memorySummaryText(){
-      const items = loadMemory().filter(it => it && it.type==="like");
-      if (!items.length) return "（記憶なし）";
-      // 最大5件だけ表示（増えすぎ防止）
-      const top = items.slice(-5).map(it => `・${it.value}`).join("\n");
-      const more = items.length > 5 ? `\n…ほか${items.length - 5}件` : "";
-      return `【記憶（好き）】\n${top}${more}`;
-    }
+        // direct substring match
+        if(t.includes(v)){
+          return item;
+        }
 
-    /**********************
-     * FREEモード返信（仮）
-     * - 記憶が正しく動いているか確認できることを優先
-     **********************/
-    function freeModeReply(userText){
-      const like = extractLikeItem(userText);
-      if (like) {
-        const r = upsertMemoryLike(like);
-        if (r.added) {
-          return [
-            `……そういえば、ラティスは「${like}」が好き。`,
-            "記憶に追加しました。",
-            "",
-            "……なるほど。どういうところが気に入っています？"
-          ].join("\n");
-        } else {
-          return [
-            `……ええ。「${like}」は、すでに記憶しています。`,
-            "",
-            "……最近はいつ頃それに触れました？"
-          ].join("\n");
+        // weak match: if value is "歌うの" and text includes "歌"
+        if(v.length >= 2){
+          const core = v.replace(/の$/,"");
+          if(core.length >= 1 && t.includes(core)){
+            return item;
+          }
         }
       }
-
-      // 「覚えてる？」の類は、記憶の中身を要約で返す（ここがBの肝）
-      if (/覚えてる|覚えていますか|記憶/.test(userText)) {
-        return [
-          "……確認ですね。",
-          memorySummaryText(),
-          "",
-          "他にも、覚えておいてほしい「好き」を一文で教えてください。",
-          "（例：『紅茶が好き』）"
-        ].join("\n");
-      }
-
-      // 通常時：記憶のガイドに寄せる
-      return [
-        "……了解しました。",
-        "記憶を正確に積み上げたいので、あなたの情報は『断定の一文』で教えてください。",
-        "（例：『歌うのが好き』『料理が好き』）",
-        "",
-        "今、何を記憶させたいですか？"
-      ].join("\n");
+      return null;
     }
 
-    /**********************
-     * 送信処理
-     **********************/
+    function buildMemoryListText(){
+      const mem = loadMemory();
+      const likes = mem.filter(x => x.kind === "like").map(x => x.value);
+
+      if(likes.length === 0){
+        return "……現時点では、特筆すべき記憶はまだありません。";
+      }
+
+      let out = "……確認ですね。\n\n【記憶（好き）】\n";
+      for(const v of likes){
+        out += "・" + v + "\n";
+      }
+      out += "\n他にも、覚えておいてほしい「好き」を一文で教えてください。";
+      return out.trim();
+    }
+
+    /***********************
+     * Jade persona (FREE)
+     ***********************/
+    function jadeReply(userText){
+      const rel = loadRel();
+      const t = normalizeJP(userText);
+
+      // If user asks "覚えてる？" -> list memory
+      if(t.includes("覚えてる") || t.includes("覚えている") || t.includes("記憶")){
+        return buildMemoryListText();
+      }
+
+      // If user just told a like -> acknowledge and ask follow-up
+      const likeItem = extractLikeItem(userText);
+      if(likeItem){
+        const r = dedupePushMemory({ kind:"like", value: likeItem, at: nowISO() });
+        const base = `……そういえば、ラティスは「${likeItem}」が好き。`;
+        const add = r.added ? "\n記憶に追加しました。" : "\n（これは既に覚えています。）";
+        const q = "\n\n……なるほど。どういうところが気に入っています？";
+        return (base + add + q).trim();
+      }
+
+      // Otherwise, normal conversation (restrained, polite)
+      if(rel === "C"){
+        return "……承知しました。\n要点だけで構いません。いま、話したいことは何でしょう、ラティス。";
+      }
+      // future: other rel stages
+      return "……ええ。続けてください、ラティス。";
+    }
+
+    /***********************
+     * Send flow
+     ***********************/
     function send(){
-      const text = normalizeJapaneseText(input.value);
+      const text = input.value.trim();
       if(!text) return;
+
+      addMessage(text, "user");
+      input.value = "";
 
       // turns++
       const turns = loadTurns() + 1;
       saveTurns(turns);
 
-      addMessage(text, "user");
-      input.value = "";
+      // Debug: memory load OK
+      const mem = loadMemory();
+      const rel = loadRel();
+      debugLog(`[debug] 記憶ロードOK / rel=${rel} / turns=${turns} / mode=${MODE}`);
 
-      // 記憶抽出ログ
-      const extracted = extractLikeItem(text);
-      if (extracted) {
-        addDebug(`[debug] extractLikeItem = "${extracted}"`);
-      } else {
-        addDebug(`[debug] extractLikeItem = null`);
+      // B: proactive recall (inserted BEFORE main reply)
+      const recall = findRecallFromMemory(text);
+      if(recall){
+        // keep it subtle and restrained
+        addMessage(`……そういえば、ラティスは「${recall.value}」が好きでしたね。`, "jade");
+        debugLog(`[debug] proactive_recall=ON / hit=${recall.value}`);
+      }else{
+        debugLog(`[debug] proactive_recall=OFF / hit=null`);
       }
 
-      // 返信
-      const reply = freeModeReply(text);
+      // Main reply
+      const reply = jadeReply(text);
       addMessage(reply, "jade");
-
-      // 状態ログ
-      addDebug(`[debug] 記憶ロードOK / rel=${REL_STAGE} / turns=${turns} / mode=${MODE}`);
-      updateMemoryCount();
     }
 
-    /**********************
-     * 起動
-     **********************/
-    // debug状態復元
-    setDebug(localStorage.getItem(LS_KEY_DEBUG)==="1");
+    /***********************
+     * Init
+     ***********************/
+    function init(){
+      // debug default
+      const dbg = loadStr(KEY_DEBUG, "0");
+      debugChk.checked = (dbg === "1");
+      debugChk.addEventListener("change", () => {
+        localStorage.setItem(KEY_DEBUG, debugChk.checked ? "1" : "0");
+      });
 
-    // UIイベント
+      // ensure rel exists
+      if(!localStorage.getItem(KEY_REL)) saveRel("C");
+      // ensure turns exists
+      if(!localStorage.getItem(KEY_TURNS)) saveTurns(0);
+
+      setPills();
+
+      addMessage("ジェイドが静かにこちらを見ている。", "jade");
+      debugLog(`[debug] 起動OK / memoryItems=${loadMemory().length} / rel=${loadRel()} / turns=${loadTurns()} / mode=${MODE}`);
+    }
+
+    // Events
     sendBtn.addEventListener("click", send);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -474,25 +537,16 @@
       }
     });
 
-    clearMemoryBtn.addEventListener("click", () => {
-      const ok = confirm("記憶（ローカル保存）を全消去します。よろしいですか？");
-      if(!ok) return;
-      localStorage.removeItem(LS_KEY_MEMORY);
-      updateMemoryCount();
-      addDebug("[debug] memory cleared");
-      addMessage("……記憶を消去しました。", "jade");
+    btnClear.addEventListener("click", () => {
+      if(!confirm("記憶をすべて削除します。よろしいですか？")) return;
+      saveMemory([]);
+      saveTurns(0);
+      saveRel("C");
+      addMessage("……記憶は整理しました。必要なら、改めて教えてください。", "jade");
+      debugLog(`[debug] memory_clear=OK`);
     });
 
-    debugToggle.addEventListener("change", () => {
-      setDebug(debugToggle.checked);
-      addMessage(`……debug表示を ${debugToggle.checked ? "ON" : "OFF"} にしました。`, "jade");
-    });
-
-    updateMemoryCount();
-
-    // 起動メッセージ
-    addMessage("ジェイドが静かにこちらを見ている。", "jade");
-    addDebug(`[debug] 起動OK / memoryItems=${loadMemory().length} / rel=${REL_STAGE} / turns=${loadTurns()} / mode=${MODE} / ver=${APP_VERSION}`);
+    init();
   </script>
 </body>
 </html>
