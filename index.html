@@ -14,20 +14,16 @@
       display:flex;
       flex-direction:column;
       height:100vh;
-
-      /* iPhoneのホームバーに被らない */
       padding-bottom: env(safe-area-inset-bottom);
     }
-
     #chat{
       flex:1;
       overflow-y:auto;
       padding:15px;
-      padding-bottom: 140px; /* 入力欄に隠れないための余白 */
+      padding-bottom: 140px;
       box-sizing: border-box;
       -webkit-overflow-scrolling: touch;
     }
-
     .message{
       margin:10px 0;
       max-width:80%;
@@ -37,33 +33,20 @@
       white-space:pre-wrap;
       word-break: break-word;
     }
-
-    .user{
-      background:#2563eb;
-      margin-left:auto;
-    }
-
-    .jade{
-      background:#1e293b;
-      margin-right:auto;
-    }
+    .user{ background:#2563eb; margin-left:auto; }
+    .jade{ background:#1e293b; margin-right:auto; }
 
     #inputArea{
       position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-
+      left: 0; right: 0; bottom: 0;
       display:flex;
       gap: 8px;
       padding:10px;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
       background:#020617;
-
       box-sizing: border-box;
       border-top: 1px solid rgba(255,255,255,0.08);
     }
-
     input{
       flex:1;
       padding:12px;
@@ -72,7 +55,6 @@
       font-size:16px;
       outline: none;
     }
-
     button{
       padding:12px 14px;
       border:none;
@@ -82,11 +64,14 @@
       font-size:16px;
       font-weight:600;
       cursor:pointer;
-      touch-action: manipulation; /* iOSでタップが効きやすくなる */
+      touch-action: manipulation;
     }
+    button:active{ transform: scale(0.98); }
 
-    button:active{
-      transform: scale(0.98);
+    /* 小さめのデバッグ表示（必要なら消してOK） */
+    .debug{
+      opacity:0.8;
+      font-size:13px;
     }
   </style>
 </head>
@@ -104,6 +89,10 @@
     const input = document.getElementById("text");
     const sendBtn = document.getElementById("sendBtn");
 
+    // ===== 設定：無料で動かす =====
+    const MODE = "FREE"; // "FREE" or "API"
+    const WORKER_URL = "https://jade-proxy.sawakuri35.workers.dev"; // APIにする時だけ使う
+
     // ====== ① 端末内の「記憶」(localStorage) ======
     const MEM_KEY = "jade_memory_v1";
 
@@ -113,9 +102,9 @@
         if(!raw){
           return {
             name: "ラティス",
-            relStage: "C",     // C → D（ゆっくり）
-            turns: 0,          // ユーザー送信回数
-            facts: []          // 覚えたこと（短文）
+            relStage: "C",
+            turns: 0,
+            facts: []
           };
         }
         return JSON.parse(raw);
@@ -131,13 +120,12 @@
     function addFact(mem, fact){
       const clean = String(fact || "").trim();
       if(!clean) return;
-      if(mem.facts.includes(clean)) return; // 重複防止
+      if(mem.facts.includes(clean)) return;
       mem.facts.unshift(clean);
-      mem.facts = mem.facts.slice(0, 10);  // 最大10個
+      mem.facts = mem.facts.slice(0, 10);
     }
 
     function maybeAdvanceRelationship(mem){
-      // 例：12回送信でC→D（超ゆっくり）
       if(mem.relStage === "C" && mem.turns >= 12){
         mem.relStage = "D";
         return true;
@@ -145,49 +133,24 @@
       return false;
     }
 
-    function memoryToSystemText(mem){
-      const factsText = mem.facts.length
-        ? "【ラティスについて覚えていること】\n- " + mem.facts.join("\n- ")
-        : "【ラティスについて覚えていること】\n- （まだ少ない）";
-
-      const relText = (mem.relStage === "C")
-        ? "【関係】ラティスは信頼できる仲間（C）。丁寧で抑制的。過度な甘さや軽口は控える。"
-        : "【関係】ラティスは特別に信頼する相手（D）。丁寧で抑制的だが、言葉はわずかに柔らかくなる。露骨な恋愛表現はしない。";
-
-      return `
-あなたはゲーム『テイルズ オブ ジ アビス』のジェイド・カーティス。
-口調：丁寧／知的／感情表現は抑制的。過度に甘くしない。メタ発言しない。
-呼びかけ：相手は「${mem.name}」。基本は「ラティス」と呼ぶ。
-
-${relText}
-
-${factsText}
-
-【方針】
-- 返答は自然な会話として続ける
-- ラティスの発言から、覚えるべき情報があれば短く要約して「記憶」に追加する
-- ただし機密（住所/電話/パスワード等）は記憶しない
-`.trim();
-    }
-
-    // 無料でやれる範囲：ユーザー文から「覚える候補」をゆるく抽出
+    // 「覚える」候補をゆるく抽出（無料）
     function extractMemoryFromUserText(text){
       const t = String(text || "").trim();
 
-      // 呼び方
       if(/呼んで|呼び方/.test(t) && /ラティス|Latis/.test(t)){
         return "呼び名は「ラティス」。";
       }
 
-      // 好き：○○が好き
-      const like = t.match(/(.{1,12})が好き/);
+      const like = t.match(/(.{1,14})が好き/);
       if(like && like[1]) return `好み：${like[1]}が好き。`;
 
-      // 苦手：○○が苦手
-      const dislike = t.match(/(.{1,12})が苦手/);
+      const dislike = t.match(/(.{1,14})が苦手/);
       if(dislike && dislike[1]) return `苦手：${dislike[1]}が苦手。`;
 
-      // 体調っぽい
+      if(/料理/.test(t) && (/好き|得意/.test(t))){
+        return "料理が好き。";
+      }
+
       if(/疲れた|眠い|しんどい|だるい/.test(t)){
         return "今日は少し疲れている様子。";
       }
@@ -195,12 +158,95 @@ ${factsText}
       return "";
     }
 
-    function addMessage(text, type){
+    function addMessage(text, type, isDebug=false){
       const div = document.createElement("div");
-      div.className = "message " + type;
+      div.className = "message " + type + (isDebug ? " debug" : "");
       div.innerText = text;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
+    }
+
+    // ====== FREEモード：ジェイドっぽい返答をローカル生成 ======
+    function freeReply(userText, mem){
+      const t = String(userText || "").trim();
+
+      const name = mem.name || "ラティス";
+      const soft = (mem.relStage === "D");
+
+      // 軽い口調調整（甘くしすぎない）
+      const prefix = soft ? "……" : "……";
+      const suffix = soft ? `、${name}。` : `、${name}。`;
+
+      // 挨拶
+      if(/(おはよう|こんにちは|こんばんは)/.test(t)){
+        if(/おはよう/.test(t)) return `${prefix}おはようございます${suffix}`;
+        if(/こんにちは/.test(t)) return `${prefix}こんにちは${suffix}`;
+        if(/こんばんは/.test(t)) return `${prefix}こんばんは${suffix}`;
+      }
+
+      // 料理トピック
+      if(/料理/.test(t)){
+        return `${prefix}料理ですか。手順の整理が上手い人ほど、味も安定します。\n作る側として、どんな料理が好きなんです？${suffix}`;
+      }
+
+      // 目的
+      if(/話したい|会いたい|構って/.test(t)){
+        return `${prefix}その判断は合理的ですね。\nでは、今日は何から話しましょう${suffix}`;
+      }
+
+      // 疲れ
+      if(/疲れた|眠い|しんどい|だるい/.test(t)){
+        return `${prefix}無理を続けるのは得策ではありません。\n短い休息を挟みましょう。水分は取れていますか${suffix}`;
+      }
+
+      // 質問ぽい
+      if(/[？?]$/.test(t)){
+        return `${prefix}質問の意図は理解しました。\n結論から言うと「場合による」です。前提条件をもう少し教えてください${suffix}`;
+      }
+
+      // デフォルト
+      return `${prefix}なるほど。\nもう少し詳しく聞かせてください${suffix}`;
+    }
+
+    // ====== APIモード（あとで課金するなら使える） ======
+    async function apiReply(userText, mem){
+      // NOTE: 無料枠が無いと429で失敗しがち
+      const systemText = [
+        "あなたはゲーム『テイルズ オブ ジ アビス』のジェイド・カーティス。",
+        "口調：丁寧／知的／感情表現は抑制的。過度に甘くしない。メタ発言しない。",
+        `呼びかけ：相手は「${mem.name}」。基本は「ラティス」と呼ぶ。`,
+        mem.relStage === "D"
+          ? "関係：特別に信頼する相手（D）。言葉はわずかに柔らかいが露骨な恋愛表現はしない。"
+          : "関係：信頼できる仲間（C）。丁寧で抑制的。",
+        mem.facts.length
+          ? "覚えていること：\n- " + mem.facts.join("\n- ")
+          : "覚えていること：\n- （まだ少ない）"
+      ].join("\n");
+
+      const res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: systemText },
+            { role: "user", content: userText }
+          ]
+        })
+      });
+
+      // 失敗時も内容を見せる（デバッグ）
+      const raw = await res.text();
+      let data = null;
+      try{ data = JSON.parse(raw); }catch(e){}
+
+      if(!res.ok){
+        const msg = data?.error?.message || raw || "unknown error";
+        return `[debug] status=${res.status}\n${msg}`;
+      }
+
+      return data?.choices?.[0]?.message?.content
+        ?? data?.reply
+        ?? `[debug] status=${res.status}\n（返答形式が想定と違います）\n${raw}`;
     }
 
     async function send(){
@@ -224,39 +270,21 @@ ${factsText}
         addMessage("（……ふむ。あなたへの信頼は、以前より確かなものになりましたね、ラティス。）", "jade");
       }
 
-      // ---- ここからAIへ送る ----
-      // あなたの Worker URL（いま動いてるもの）
-      const WORKER_URL = "https://jade-proxy.sawakuri35.workers.dev";
-
-      try{
-        const res = await fetch(WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [
-              { role: "system", content: memoryToSystemText(mem) },
-              { role: "user", content: text }
-            ]
-          })
-        });
-
-        const data = await res.json();
-
-        const reply =
-          data?.choices?.[0]?.message?.content ??
-          data?.reply ??
-          "……通信状態が不安定なようですね。";
-
+      // 返答生成
+      if(MODE === "FREE"){
+        const reply = freeReply(text, mem);
         addMessage(reply, "jade");
-      }catch(e){
-        addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
+      }else{
+        try{
+          const reply = await apiReply(text, mem);
+          addMessage(reply, "jade", reply.startsWith("[debug]"));
+        }catch(e){
+          addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
+        }
       }
     }
 
-    // 送信ボタン
     sendBtn.addEventListener("click", send);
-
-    // Enterで送信（iPhoneでも使えることが多い）
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -264,11 +292,11 @@ ${factsText}
       }
     });
 
-    // 起動時メッセージ＆動作確認のdebug
+    // 起動
     (function boot(){
       addMessage("ジェイドが静かにこちらを見ている。", "jade");
       const mem = loadMemory();
-      addMessage(`[debug] 記憶ロードOK / rel=${mem.relStage} / turns=${mem.turns}`, "jade");
+      addMessage(`[debug] 記憶ロードOK / rel=${mem.relStage} / turns=${mem.turns} / mode=${MODE}`, "jade", true);
     })();
   </script>
 </body>
