@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ジェイドと会話</title>
-
   <style>
     body{
       margin:0;
@@ -16,7 +15,6 @@
       height:100vh;
       padding-bottom: env(safe-area-inset-bottom);
     }
-
     #chat{
       flex:1;
       overflow-y:auto;
@@ -25,7 +23,6 @@
       box-sizing: border-box;
       -webkit-overflow-scrolling: touch;
     }
-
     .message{
       margin:10px 0;
       max-width:80%;
@@ -35,33 +32,21 @@
       white-space:pre-wrap;
       word-break: break-word;
     }
-
-    .user{
-      background:#2563eb;
-      margin-left:auto;
-    }
-
-    .jade{
-      background:#1e293b;
-      margin-right:auto;
-    }
-
+    .user{ background:#2563eb; margin-left:auto; }
+    .jade{ background:#1e293b; margin-right:auto; }
     #inputArea{
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
-
       display:flex;
       gap: 8px;
       padding:10px;
       padding-bottom: calc(10px + env(safe-area-inset-bottom));
       background:#020617;
-
       box-sizing: border-box;
       border-top: 1px solid rgba(255,255,255,0.08);
     }
-
     input{
       flex:1;
       padding:12px;
@@ -70,7 +55,6 @@
       font-size:16px;
       outline: none;
     }
-
     button{
       padding:12px 14px;
       border:none;
@@ -82,10 +66,8 @@
       cursor:pointer;
       touch-action: manipulation;
     }
-
-    button:active{
-      transform: scale(0.98);
-    }
+    button:active{ transform: scale(0.98); }
+    .debug{ opacity:0.9; font-size:14px; }
   </style>
 </head>
 
@@ -93,17 +75,16 @@
   <div id="chat"></div>
 
   <div id="inputArea">
-    <input id="text" placeholder="ラティス…？" autocomplete="off">
+    <input id="text" placeholder="ラティス…？" autocomplete="off" />
     <button id="sendBtn" type="button">送信</button>
   </div>
 
   <script>
+    const WORKER_URL = "https://jade-proxy.sawakuri35.workers.dev";
+
     const chat = document.getElementById("chat");
     const input = document.getElementById("text");
     const sendBtn = document.getElementById("sendBtn");
-
-    // ★ここだけ自分のWorker URLにしてね（今のままでOK）
-    const WORKER_URL = "https://jade-proxy.sawakuri35.workers.dev";
 
     function addMessage(text, type){
       const div = document.createElement("div");
@@ -113,17 +94,6 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    // ★返答の取り出し（choices形式 / responses形式 / error形式に対応）
-    function pickReply(data){
-      return (
-        data?.choices?.[0]?.message?.content ??
-        data?.output_text ??
-        data?.output?.[0]?.content?.[0]?.text ??
-        data?.error?.message ??
-        null
-      );
-    }
-
     async function send(){
       const text = input.value.trim();
       if(!text) return;
@@ -131,45 +101,44 @@
       addMessage(text, "user");
       input.value = "";
 
-      try{
+      // 送信する messages（system + user）
+      const payload = {
+        messages: [
+          {
+            role: "system",
+            content: "あなたはテイルズオブジアビスのジェイド・カーティス。丁寧で知的、感情は抑制的。ラティスを信頼する仲間として接する。"
+          },
+          { role: "user", content: text }
+        ]
+      };
+
+      try {
         const res = await fetch(WORKER_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            messages: [
-              {
-                role: "system",
-                content: "あなたはテイルズオブジアビスのジェイド・カーティス。丁寧で知的、感情は抑制的。ラティスを信頼する仲間として接する。"
-              },
-              {
-                role: "user",
-                content: text
-              }
-            ]
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
 
         const raw = await res.text();
+        let data;
+        try { data = JSON.parse(raw); } catch { data = null; }
 
-        // ✅ まずは返ってきた中身を表示（原因特定のため）
-        addMessage(`[debug] status=${res.status}\n${raw.slice(0, 900)}`, "jade");
+        // デバッグ表示（必要なら残してOK）
+        if (!res.ok) {
+          addMessage(`[debug] status=${res.status}\n${raw}`, "jade");
+        }
 
-        let data = null;
-        try { data = JSON.parse(raw); } catch {}
+        const reply =
+          data?.choices?.[0]?.message?.content ??
+          "……通信状態が不安定なようですね。";
 
-        const reply = pickReply(data) || "（debug）返事本文が見つからない形式でした";
         addMessage(reply, "jade");
-
-      }catch(e){
-        addMessage(`[debug] fetch失敗: ${String(e)}`, "jade");
+      } catch (e) {
         addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
       }
     }
 
     sendBtn.addEventListener("click", send);
-
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
