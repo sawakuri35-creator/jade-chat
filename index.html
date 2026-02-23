@@ -1,153 +1,152 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ジェイドと会話</title>
-  <style>
-    body{
-      margin:0;
-      font-family:-apple-system, system-ui, sans-serif;
-      background:#0f172a;
-      color:white;
-      display:flex;
-      flex-direction:column;
-      height:100vh;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    #chat{
-      flex:1;
-      overflow-y:auto;
-      padding:15px;
-      padding-bottom: 140px;
-      box-sizing: border-box;
-      -webkit-overflow-scrolling: touch;
-    }
-    .message{
-      margin:10px 0;
-      max-width:80%;
-      padding:12px;
-      border-radius:14px;
-      line-height:1.6;
-      white-space:pre-wrap;
-      word-break: break-word;
-    }
-    .user{ background:#2563eb; margin-left:auto; }
-    .jade{ background:#1e293b; margin-right:auto; }
-    #inputArea{
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display:flex;
-      gap: 8px;
-      padding:10px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom));
-      background:#020617;
-      box-sizing: border-box;
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
-    input{
-      flex:1;
-      padding:12px;
-      border-radius:10px;
-      border:none;
-      font-size:16px;
-      outline: none;
-    }
-    button{
-      padding:12px 14px;
-      border:none;
-      border-radius:10px;
-      background:#10b981;
-      color:white;
-      font-size:16px;
-      font-weight:600;
-      cursor:pointer;
-      touch-action: manipulation;
-    }
-    button:active{ transform: scale(0.98); }
-    .debug{ opacity:0.9; font-size:14px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ジェイドと会話</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system, system-ui, sans-serif;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+#chat{
+  flex:1;
+  overflow-y:auto;
+  padding:15px;
+  padding-bottom:140px;
+}
+
+.message{
+  margin:10px 0;
+  max-width:80%;
+  padding:12px;
+  border-radius:14px;
+  line-height:1.6;
+  white-space:pre-wrap;
+}
+
+.user{
+  background:#2563eb;
+  margin-left:auto;
+}
+
+.jade{
+  background:#1e293b;
+  margin-right:auto;
+}
+
+#inputArea{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  display:flex;
+  gap:8px;
+  padding:10px;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  background:#020617;
+}
+
+input{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  font-size:16px;
+}
+
+button{
+  padding:12px 14px;
+  border:none;
+  border-radius:10px;
+  background:#10b981;
+  color:white;
+  font-size:16px;
+}
+</style>
 </head>
 
 <body>
-  <div id="chat"></div>
 
-  <div id="inputArea">
-    <input id="text" placeholder="ラティス…？" autocomplete="off" />
-    <button id="sendBtn" type="button">送信</button>
-  </div>
+<div id="chat"></div>
 
-  <script>
-    const WORKER_URL = "https://jade-proxy.sawakuri35.workers.dev";
+<div id="inputArea">
+<input id="text" placeholder="ラティス…？">
+<button id="sendBtn">送信</button>
+</div>
 
-    const chat = document.getElementById("chat");
-    const input = document.getElementById("text");
-    const sendBtn = document.getElementById("sendBtn");
+<script>
+const chat=document.getElementById("chat");
+const input=document.getElementById("text");
+const sendBtn=document.getElementById("sendBtn");
 
-    function addMessage(text, type){
-      const div = document.createElement("div");
-      div.className = "message " + type;
-      div.innerText = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
+function addMessage(text,type){
+  const div=document.createElement("div");
+  div.className="message "+type;
+  div.innerText=text;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
 
-    async function send(){
-      const text = input.value.trim();
-      if(!text) return;
+/* ===== 無料ジェイドAI ===== */
 
-      addMessage(text, "user");
-      input.value = "";
+const jadeReplies=[
+"……なるほど。興味深いですね、ラティス。",
+"あなたらしい発想です。嫌いではありません。",
+"少し状況を整理しましょうか。",
+"その判断は合理的ですね。",
+"……ふふ、相変わらずですね。",
+"無理は禁物ですよ、ラティス。",
+"続きを聞かせてください。",
+"それで？あなたはどうしたいのです？"
+];
 
-      // 送信する messages（system + user）
-      const payload = {
-        messages: [
-          {
-            role: "system",
-            content: "あなたはテイルズオブジアビスのジェイド・カーティス。丁寧で知的、感情は抑制的。ラティスを信頼する仲間として接する。"
-          },
-          { role: "user", content: text }
-        ]
-      };
+function jadeThink(userText){
+  // 超簡易ジェイド思考（無料版）
+  if(userText.includes("疲"))
+    return "……休息も任務の一部ですよ、ラティス。";
 
-      try {
-        const res = await fetch(WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+  if(userText.includes("好き"))
+    return "感情の分析は得意分野ではありませんが……悪くありませんね。";
 
-        const raw = await res.text();
-        let data;
-        try { data = JSON.parse(raw); } catch { data = null; }
+  if(userText.includes("助"))
+    return "ええ、あなたの力になりますよ。";
 
-        // デバッグ表示（必要なら残してOK）
-        if (!res.ok) {
-          addMessage(`[debug] status=${res.status}\n${raw}`, "jade");
-        }
+  return jadeReplies[Math.floor(Math.random()*jadeReplies.length)];
+}
 
-        const reply =
-          data?.choices?.[0]?.message?.content ??
-          "……通信状態が不安定なようですね。";
+function send(){
+  const text=input.value.trim();
+  if(!text) return;
 
-        addMessage(reply, "jade");
-      } catch (e) {
-        addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
-      }
-    }
+  addMessage(text,"user");
+  input.value="";
 
-    sendBtn.addEventListener("click", send);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        send();
-      }
-    });
+  setTimeout(()=>{
+    const reply=jadeThink(text);
+    addMessage(reply,"jade");
+  },500);
+}
 
-    addMessage("ジェイドが静かにこちらを見ている。", "jade");
-    addMessage("[debug] この端末は新しいindex.htmlを読んでます", "jade");
-  </script>
+sendBtn.addEventListener("click",send);
+
+input.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    send();
+  }
+});
+
+addMessage("ジェイドが静かにこちらを見ている。","jade");
+</script>
+
 </body>
 </html>
