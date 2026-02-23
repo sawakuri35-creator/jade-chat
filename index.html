@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -16,8 +14,6 @@
       display:flex;
       flex-direction:column;
       height:100vh;
-
-      /* iPhoneのホームバーに被らない */
       padding-bottom: env(safe-area-inset-bottom);
     }
 
@@ -25,7 +21,7 @@
       flex:1;
       overflow-y:auto;
       padding:15px;
-      padding-bottom: 140px; /* 入力欄に隠れないための余白 */
+      padding-bottom: 140px;
       box-sizing: border-box;
       -webkit-overflow-scrolling: touch;
     }
@@ -84,7 +80,7 @@
       font-size:16px;
       font-weight:600;
       cursor:pointer;
-      touch-action: manipulation; /* iOSでタップが効きやすくなる */
+      touch-action: manipulation;
     }
 
     button:active{
@@ -106,6 +102,9 @@
     const input = document.getElementById("text");
     const sendBtn = document.getElementById("sendBtn");
 
+    // ★ここだけ自分のWorker URLにしてね（今のままでOK）
+    const WORKER_URL = "https://jade-proxy.sawakuri35.workers.dev";
+
     function addMessage(text, type){
       const div = document.createElement("div");
       div.className = "message " + type;
@@ -114,48 +113,63 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function send(){
+    // ★返答の取り出し（choices形式 / responses形式 / error形式に対応）
+    function pickReply(data){
+      return (
+        data?.choices?.[0]?.message?.content ??
+        data?.output_text ??
+        data?.output?.[0]?.content?.[0]?.text ??
+        data?.error?.message ??
+        null
+      );
+    }
+
+    async function send(){
       const text = input.value.trim();
       if(!text) return;
 
       addMessage(text, "user");
       input.value = "";
-      addMessage("【debug】この端末は新しいindex.htmlを読んでます", "jade");
 
-fetch("https://jade-proxy.sawakuri35.workers.dev", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    messages: [
-      {
-        role: "system",
-        content: "あなたはテイルズオブジアビスのジェイド・カーティス。丁寧で知的、感情は抑制的。ラティスを信頼する仲間として接する。"
-      },
-      {
-        role: "user",
-        content: text
+      try{
+        const res = await fetch(WORKER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: "system",
+                content: "あなたはテイルズオブジアビスのジェイド・カーティス。丁寧で知的、感情は抑制的。ラティスを信頼する仲間として接する。"
+              },
+              {
+                role: "user",
+                content: text
+              }
+            ]
+          })
+        });
+
+        const raw = await res.text();
+
+        // ✅ まずは返ってきた中身を表示（原因特定のため）
+        addMessage(`[debug] status=${res.status}\n${raw.slice(0, 900)}`, "jade");
+
+        let data = null;
+        try { data = JSON.parse(raw); } catch {}
+
+        const reply = pickReply(data) || "（debug）返事本文が見つからない形式でした";
+        addMessage(reply, "jade");
+
+      }catch(e){
+        addMessage(`[debug] fetch失敗: ${String(e)}`, "jade");
+        addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
       }
-    ]
-  })
-})
-.then(res => res.json())
-.then(data => {
-  const reply =
-    data.choices?.[0]?.message?.content ??
-    "……通信状態が不安定なようですね。";
-  addMessage(reply, "jade");
-})
-.catch(() => {
-  addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
-});
     }
 
-    // 送信ボタン
     sendBtn.addEventListener("click", send);
 
-    // Enterで送信（iPhoneでも使えることが多い）
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -163,8 +177,8 @@ fetch("https://jade-proxy.sawakuri35.workers.dev", {
       }
     });
 
-    // 起動時メッセージ
     addMessage("ジェイドが静かにこちらを見ている。", "jade");
+    addMessage("[debug] この端末は新しいindex.htmlを読んでます", "jade");
   </script>
 </body>
 </html>
