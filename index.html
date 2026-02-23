@@ -121,10 +121,34 @@
       addMessage(text, "user");
       input.value = "";
 
-      // 仮ジェイド返信（後でAIに置き換える）
-      setTimeout(() => {
-        addMessage("……なるほど。続けてください、ラティス。", "jade");
-      }, 400);
+fetch("https://jade-proxy.sawakuri35.workers.dev", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    messages: [
+      {
+        role: "system",
+        content: "あなたはテイルズオブジアビスのジェイド・カーティス。丁寧で知的、感情は抑制的。ラティスを信頼する仲間として接する。"
+      },
+      {
+        role: "user",
+        content: text
+      }
+    ]
+  })
+})
+.then(res => res.json())
+.then(data => {
+  const reply =
+    data.choices?.[0]?.message?.content ??
+    "……通信状態が不安定なようですね。";
+  addMessage(reply, "jade");
+})
+.catch(() => {
+  addMessage("……少し調子が悪いようです。後でもう一度試してください。", "jade");
+});
     }
 
     // 送信ボタン
