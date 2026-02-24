@@ -1,226 +1,819 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jade Chat</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jade Chat / 記憶システム優先</title>
+  <style>
+    :root{
+      --bg1:#071426;
+      --bg2:#0b1c33;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.08);
+      --stroke:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.70);
+      --muted2:rgba(255,255,255,.55);
+      --blue1:#2f66ff;
+      --blue2:#3b7bff;
+      --green:#35d0a8;
+      --danger:#ff4d6d;
+      --shadow:0 14px 44px rgba(0,0,0,.45);
+      --radius:22px;
+      --radius2:18px;
+      --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:var(--font);
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 30% 0%, #132f5a 0%, transparent 55%),
+                  radial-gradient(900px 700px at 80% 10%, #0f3a55 0%, transparent 55%),
+                  linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+    .wrap{
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 18px 14px 90px;
+    }
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin: 6px 2px 14px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .title h1{
+      margin:0;
+      font-size: 26px;
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+    .subtitle{
+      color:var(--muted2);
+      font-size:13px;
+    }
+    .chipRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+      align-items:center;
+    }
+    .chip{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding:10px 12px;
+      border-radius: 999px;
+      font-size:14px;
+      color: var(--muted);
+      backdrop-filter: blur(10px);
+    }
+    .chip strong{ color:var(--text); font-weight:600; margin-right:6px;}
+    .rightControls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:14px;
+      cursor:pointer;
+      backdrop-filter: blur(10px);
+    }
+    .btn.danger{
+      border-color: rgba(255,77,109,.35);
+      color: rgba(255,255,255,.92);
+    }
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      color:var(--muted);
+      user-select:none;
+    }
+    .switch{
+      width:46px; height:26px;
+      background: rgba(255,255,255,.14);
+      border-radius:999px;
+      position:relative;
+      border:1px solid rgba(255,255,255,.14);
+      flex:0 0 auto;
+    }
+    .knob{
+      width:22px; height:22px;
+      background: rgba(255,255,255,.92);
+      border-radius:50%;
+      position:absolute;
+      top:1px; left:1px;
+      transition: transform .18s ease;
+    }
+    .switch.on{
+      background: rgba(53,208,168,.35);
+      border-color: rgba(53,208,168,.35);
+    }
+    .switch.on .knob{
+      transform: translateX(20px);
+      background: #eafff8;
+    }
 
-<style>
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
-  background:#0f172a;
-  color:white;
-}
+    .chat{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .bubble{
+      max-width: 92%;
+      border-radius: var(--radius);
+      padding:16px 18px;
+      line-height:1.6;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .bubble.system{
+      align-self:flex-start;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+    }
+    .bubble.user{
+      align-self:flex-end;
+      background: linear-gradient(180deg, rgba(47,102,255,.92), rgba(59,123,255,.92));
+      border-color: rgba(255,255,255,.10);
+    }
+    .bubble.debug{
+      align-self:flex-start;
+      background: rgba(255,255,255,.04);
+      border-style:dashed;
+      color: rgba(255,255,255,.70);
+      font-size: 13px;
+      box-shadow:none;
+    }
 
-#chat{
-  padding:16px;
-  padding-bottom:120px;
-}
-
-.message{
-  margin:12px 0;
-  max-width:85%;
-  padding:12px 14px;
-  border-radius:16px;
-  line-height:1.6;
-  white-space:pre-wrap;
-}
-
-.user{
-  background:#2563eb;
-  margin-left:auto;
-}
-
-.jade{
-  background:#1e293b;
-}
-
-#inputArea{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  display:flex;
-  gap:8px;
-  padding:10px;
-  background:#020617;
-}
-
-input{
-  flex:1;
-  padding:12px;
-  border-radius:10px;
-  border:none;
-  font-size:16px;
-}
-
-button{
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#10b981;
-  color:white;
-  font-weight:bold;
-}
-</style>
+    .composer{
+      position: fixed;
+      left:0; right:0;
+      bottom: 0;
+      padding: 12px 12px 18px;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,.35) 35%, rgba(0,0,0,.55));
+      backdrop-filter: blur(12px);
+    }
+    .composerInner{
+      max-width: 860px;
+      margin: 0 auto;
+      display:flex;
+      gap:10px;
+      align-items:flex-end;
+    }
+    textarea{
+      flex:1;
+      resize:none;
+      min-height: 52px;
+      max-height: 140px;
+      padding: 14px 14px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline:none;
+      font-size: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    textarea::placeholder{ color: rgba(255,255,255,.45); }
+    .send{
+      flex:0 0 auto;
+      border:none;
+      background: rgba(53,208,168,.90);
+      color: rgba(0,0,0,.75);
+      font-weight:700;
+      padding: 14px 18px;
+      border-radius: 18px;
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      font-size: 16px;
+      min-width: 88px;
+    }
+    .send:active{ transform: translateY(1px); }
+    .footerHint{
+      margin-top:8px;
+      text-align:center;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+    }
+    @media (max-width:480px){
+      .title h1{ font-size: 22px; }
+      .bubble{ max-width: 96%; }
+      textarea{ font-size: 15px; }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Jade Chat / 記憶システム優先</h1>
+        <div class="subtitle">FREEモード（ローカル動作） / 記憶×話題×要約で “賢さ” を出します</div>
 
-<div id="chat"></div>
+        <div class="chipRow" id="chips"></div>
+      </div>
 
-<div id="inputArea">
-<input id="text" placeholder="ラティス…？">
-<button onclick="send()">送信</button>
-</div>
+      <div class="rightControls">
+        <button class="btn danger" id="clearBtn">記憶クリア</button>
+
+        <div class="toggle" id="debugToggle">
+          <span>debug</span>
+          <div class="switch" id="debugSwitch"><div class="knob"></div></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="chat" id="chat"></div>
+  </div>
+
+  <div class="composer">
+    <div class="composerInner">
+      <textarea id="input" placeholder="ラティス…？" rows="1"></textarea>
+      <button class="send" id="sendBtn">送信</button>
+    </div>
+    <div class="footerHint">※ローカル保存（localStorage） / 外部通信なし</div>
+  </div>
 
 <script>
+/** =========================
+ *  Jade Chat (FREE/LOCAL)
+ *  - 記憶（好き/最近/苦手/習慣）を自動抽出
+ *  - topic を推定して会話を繋ぐ
+ *  - 返答は「要約→確認→質問」でAI感を出す
+ *  ========================= */
 
-/* =====================
-   状態管理
-===================== */
+const STORAGE_KEY = "jade_chat_free_v2";
+const state = loadState() || makeInitialState();
 
-let state={
-  topic:null,
-  memory:[],
-  turns:0
+const UI = {
+  chat: document.getElementById("chat"),
+  chips: document.getElementById("chips"),
+  input: document.getElementById("input"),
+  sendBtn: document.getElementById("sendBtn"),
+  clearBtn: document.getElementById("clearBtn"),
+  debugToggle: document.getElementById("debugToggle"),
+  debugSwitch: document.getElementById("debugSwitch"),
 };
 
-const STOP_WORDS=["うん","はい","そう","OK","了解","ありがとう"];
+init();
 
-/* =====================
-   UI
-===================== */
-
-const chat=document.getElementById("chat");
-
-function addMessage(text,type){
-  const div=document.createElement("div");
-  div.className="message "+type;
-  div.innerText=text;
-  chat.appendChild(div);
-  chat.scrollTop=chat.scrollHeight;
-}
-
-/* =====================
-   記憶抽出
-===================== */
-
-function extractMemory(text){
-
-  if(STOP_WORDS.includes(text)) return;
-
-  if(text.includes("好き")){
-    state.memory.push({type:"like",value:text});
+/* ========= init ========= */
+function init(){
+  renderAll();
+  if(state.messages.length === 0){
+    pushSystem("ジェイドが静かにこちらを見ている。");
   }
 
-  if(text.includes("最近")){
-    state.memory.push({type:"recent",value:text});
-  }
+  // events
+  UI.sendBtn.addEventListener("click", onSend);
+  UI.input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && !e.shiftKey){
+      e.preventDefault();
+      onSend();
+    }
+  });
+  UI.input.addEventListener("input", autosizeTextarea);
+
+  UI.clearBtn.addEventListener("click", ()=>{
+    state.memory = [];
+    state.topic = "（未設定）";
+    state.turns = 0;
+    state.messages = [];
+    saveState();
+    renderAll();
+    pushSystem("（記憶を消去した）");
+    pushSystem("ジェイドが静かにこちらを見ている。");
+  });
+
+  UI.debugToggle.addEventListener("click", ()=>{
+    state.debug = !state.debug;
+    saveState();
+    renderAll();
+  });
+
+  autosizeTextarea();
 }
 
-/* =====================
-   トピック推定
-===================== */
+/* ========= handlers ========= */
+function onSend(){
+  const text = (UI.input.value || "").trim();
+  if(!text) return;
 
-function inferTopic(text){
+  UI.input.value = "";
+  autosizeTextarea();
 
-  if(STOP_WORDS.includes(text)) return state.topic;
+  // user msg
+  pushUser(text);
 
-  if(/カラオケ|歌/.test(text)) return "カラオケ";
-  if(/料理|作/.test(text)) return "料理";
+  // process
+  state.turns += 1;
 
-  return state.topic;
-}
-
-/* =====================
-   ジェイド人格フィルター
-===================== */
-
-function jadePersonaFilter(reply){
-
-  if(!reply.startsWith("……")){
-    reply="……"+reply;
+  const analysis = analyzeUserText(text);
+  if(state.debug){
+    pushDebug(`[debug] turns=${state.turns} / topic=${analysis.topic || state.topic} / memoryItems+${analysis.newMemoryItems.length}`);
   }
 
-  const observations=[
-    "ラティスらしい選択ですね。",
-    "あなたの傾向が少し見えてきました。",
-    "……なるほど、理解が進みました。",
-    "興味深い傾向です。"
+  // update topic
+  if(analysis.shouldUpdateTopic && analysis.topic){
+    state.topic = analysis.topic;
+  }
+
+  // update memory
+  for(const m of analysis.newMemoryItems){
+    upsertMemory(m);
+  }
+
+  // generate reply
+  const reply = generateJadeReply(text, analysis);
+  pushSystem(reply);
+
+  saveState();
+  renderChips();
+}
+
+/* ========= analysis ========= */
+
+// 相槌・短文：topic更新しない＆記憶にも入れない
+const STOP_WORDS = new Set([
+  "うん","うーん","はい","そう","そうだね","なるほど","へえ","OK","おっけー","了解","りょ","りょーかい","ありがとう","ありがと","ごめん","すみません",
+  "わかった","わかりました","たしかに","それな","草","w","ww","www"
+]);
+
+function analyzeUserText(text){
+  const norm = normalize(text);
+
+  const isStop = STOP_WORDS.has(norm) || norm.length <= 2;
+
+  // topic推定（軽量）
+  const topic = inferTopic(norm);
+
+  // 記憶抽出（軽量ルール）
+  const newMemoryItems = isStop ? [] : extractMemoryItems(text, norm);
+
+  // topic更新条件：相槌・短すぎ・疑問だけは更新しない（基本）
+  let shouldUpdateTopic = true;
+  if(isStop) shouldUpdateTopic = false;
+
+  // 「覚えてる？」みたいなメタ質問は topic を変えない
+  if(/覚えてる|覚えてます|記憶|メモ|保存/.test(norm)) shouldUpdateTopic = false;
+
+  // ただの一言（名詞1語）でも topic は変えにくい（暴発防止）
+  if(norm.length <= 4) shouldUpdateTopic = false;
+
+  return { topic, shouldUpdateTopic, newMemoryItems, isStop };
+}
+
+function inferTopic(norm){
+  // 代表トピック辞書
+  const TOPIC_RULES = [
+    { topic:"カラオケ", re: /(カラオケ|歌|歌う|唄|曲|採点|音程|ハモ|キー|高音|低音|DAM|JOYSOUND)/ },
+    { topic:"料理", re: /(料理|作る|レシピ|煮|焼|炒|切|包丁|鍋|フライパン|オムライス|デミ|味噌|調味料)/ },
+    { topic:"育児", re: /(赤ちゃん|👶|寝|睡眠|授乳|ミルク|おむつ|保育園|夜泣き|離乳食)/ },
+    { topic:"仕事", re: /(仕事|職場|勤務|夜勤|シフト|看護|特養|患者|業務)/ },
+    { topic:"システム", re: /(GitHub|Cloudflare|Workers|KV|localStorage|HTML|CSS|JavaScript|デプロイ|バインディング|コード)/ },
   ];
-
-  if(Math.random()<0.35){
-    reply+="\n\n……"+
-      observations[Math.floor(Math.random()*observations.length)];
+  for(const r of TOPIC_RULES){
+    if(r.re.test(norm)) return r.topic;
   }
 
-  return reply;
+  // fallback：文の中心語っぽいものをざっくり
+  // ひらがなだけ等は避ける
+  if(norm.length >= 6){
+    const noun = pickKeyword(norm);
+    if(noun) return noun;
+  }
+  return null;
 }
 
-/* =====================
-   返信生成
-===================== */
+function pickKeyword(norm){
+  // 超簡易：カタカナ・漢字を含む長めの塊を探す
+  const m = norm.match(/[一-龠々〆ヵヶーA-Za-z0-9]{2,}/g);
+  if(!m) return null;
+  // 長い順に
+  m.sort((a,b)=>b.length-a.length);
+  const pick = m.find(x=>x.length>=2 && !/^(それ|これ|あれ|ここ|そこ|どこ|私|ぼく|俺|あなた|君|ラティス)$/.test(x));
+  return pick || null;
+}
 
-function generateReply(text){
+function extractMemoryItems(original, norm){
+  const items = [];
 
-  let reply="";
-
-  if(text.includes("覚えてる")){
-    if(state.memory.length===0){
-      reply="今のところ特筆すべき記憶はありません。";
-    }else{
-      reply="現在の記憶です。\n"+
-        state.memory.map(m=>"・"+m.value).join("\n");
+  // 好き
+  // 例：「歌うのが好き」「料理が好き」「〇〇好き」
+  let m;
+  m = original.match(/(.+?)(が|のが)\s*好き/);
+  if(m){
+    const val = cleanupPhrase(m[1]);
+    if(val) items.push(memItem("like", val, "user"));
+  }else{
+    m = original.match(/好き[だです]?\s*(.+)/);
+    if(m){
+      const val = cleanupPhrase(m[1]);
+      if(val) items.push(memItem("like", val, "user"));
     }
   }
 
-  else if(state.topic==="カラオケ"){
-    reply="最近よく歌う曲は何です？";
+  // 最近の話
+  // 例：「最近カラオケ行った」「この前〜した」
+  if(/最近|この前|さっき|きのう|昨日|今日|先週|今週|今朝|今夜/.test(norm)){
+    const val = cleanupPhrase(original);
+    if(val) items.push(memItem("recent", val, "user"));
   }
 
-  else if(text.includes("好き")){
-    reply="どんなところが気に入っていますか？";
+  // 苦手
+  m = original.match(/(.+?)(が|は)\s*苦手/);
+  if(m){
+    const val = cleanupPhrase(m[1]);
+    if(val) items.push(memItem("dislike", val, "user"));
   }
 
-  else{
-    reply="もう少し詳しく聞かせてください。";
+  // 習慣・よくやる
+  // 「よく〜する」「いつも〜」「だいたい〜」
+  if(/よく|いつも|だいたい|毎日|毎週|毎月/.test(norm)){
+    const val = cleanupPhrase(original);
+    if(val) items.push(memItem("habit", val, "user"));
   }
 
-  return jadePersonaFilter(reply);
+  // “うん”みたいなものを弾く
+  return items.filter(x=>{
+    const v = normalize(x.value);
+    if(!v) return false;
+    if(STOP_WORDS.has(v)) return false;
+    if(v.length <= 2) return false;
+    return true;
+  });
 }
 
-/* =====================
-   送信
-===================== */
-
-function send(){
-
-  const input=document.getElementById("text");
-  const text=input.value.trim();
-  if(!text) return;
-
-  addMessage(text,"user");
-
-  state.turns++;
-
-  extractMemory(text);
-  state.topic=inferTopic(text);
-
-  const reply=generateReply(text);
-
-  setTimeout(()=>{
-    addMessage(reply,"jade");
-  },400);
-
-  input.value="";
+function memItem(type, value, source){
+  return {
+    id: cryptoId(),
+    type,        // like / recent / dislike / habit
+    value,
+    source,
+    ts: Date.now(),
+  };
 }
 
-/* 起動メッセージ */
-addMessage("ジェイドが静かにこちらを見ている。","jade");
+function upsertMemory(item){
+  // 同種・同内容は更新（重複防止）
+  const key = normalize(item.value);
+  const idx = state.memory.findIndex(m => m.type === item.type && normalize(m.value) === key);
+  if(idx >= 0){
+    state.memory[idx].ts = Date.now();
+    state.memory[idx].value = item.value; // 少し整形が変わっても上書き
+  }else{
+    state.memory.push(item);
+  }
 
+  // 最大件数（ローカル負荷対策）
+  const MAX = 60;
+  if(state.memory.length > MAX){
+    // 古い順に落とす
+    state.memory.sort((a,b)=>a.ts-b.ts);
+    state.memory = state.memory.slice(state.memory.length - MAX);
+  }
+}
+
+/* ========= reply ========= */
+
+function generateJadeReply(userText, analysis){
+  const norm = normalize(userText);
+
+  // メタ質問：覚えてる？
+  if(/覚えてる|覚えてます|記憶/.test(norm)){
+    const summary = buildMemorySummary();
+    if(summary.lines.length === 0){
+      return "……確認ですね。\n今のところ、記憶として残している項目はありません。必要なら、一文で教えてください、ラティス。";
+    }
+    return "……確認ですね。\n" + formatMemoryBlock(summary) + "\n\n他にも、覚えておいてほしい「好き」や「最近の話」があれば、一文で教えてください。";
+  }
+
+  // 相槌には静かに返す（topic変えない）
+  if(analysis.isStop){
+    return "……承知しました。では、続けましょう、ラティス。";
+  }
+
+  // 直近の話題に合わせて「要約→質問」
+  const topic = state.topic && state.topic !== "（未設定）" ? state.topic : (analysis.topic || "（未設定）");
+
+  // “AIっぽい賢さ”の核：関連記憶を引いて返す
+  const related = retrieveRelatedMemory(topic, userText);
+
+  // 返答の骨格
+  // 1) 観測（短い要約）
+  // 2) 記憶参照（あれば）
+  // 3) 次の質問（具体化）
+  const observation = makeObservation(userText, topic);
+  const memRef = makeMemoryReference(related, topic);
+
+  const q = makeNextQuestion(topic, userText, related);
+
+  // 組み立て（ジェイドらしく：抑制＋知的＋少し皮肉は控えめ）
+  let out = "";
+  out += observation;
+
+  if(memRef){
+    out += "\n\n" + memRef;
+  }
+
+  out += "\n\n" + q;
+  return out.trim();
+}
+
+function makeObservation(userText, topic){
+  // 例：「最近カラオケに行った」→認識＋一言
+  // あまり褒めすぎず、淡々と。
+  if(topic === "カラオケ"){
+    if(/行った/.test(userText)) return "……なるほど。カラオケですか。";
+    if(/歌/.test(userText)) return "……歌の話ですね。";
+    return "……話題はカラオケ、で合っていますね。";
+  }
+  if(topic === "料理"){
+    return "……料理の話ですね。";
+  }
+  if(topic === "育児"){
+    return "……育児の話、と理解しました。";
+  }
+  if(topic === "システム"){
+    return "……実装の話ですね。状況を整理しましょう。";
+  }
+  // fallback
+  return "……承知しました。";
+}
+
+function retrieveRelatedMemory(topic, userText){
+  const normTopic = normalize(topic);
+  const normText = normalize(userText);
+
+  // スコアリング：topic一致/キーワード一致/新しさ
+  const now = Date.now();
+  const scored = state.memory.map(m=>{
+    let s = 0;
+    const v = normalize(m.value);
+
+    // topicが含まれていれば加点
+    if(normTopic && v.includes(normTopic)) s += 3;
+    if(normText && v.includes(normTopic)) s += 2;
+
+    // キーワード：カラオケ系
+    if(topic === "カラオケ"){
+      if(/[歌曲キー高音低音ハモ音程]/.test(v)) s += 2;
+    }
+    // 料理系
+    if(topic === "料理"){
+      if(/[料理レシピ煮焼炒鍋フライパン]/.test(v)) s += 2;
+    }
+
+    // 種別優先：like/recentを少し強め
+    if(m.type === "like") s += 1.3;
+    if(m.type === "recent") s += 1.1;
+
+    // 新しさ
+    const ageH = Math.max(1, (now - m.ts) / 3600000);
+    s += Math.max(0, 2 - Math.log10(ageH+1)); // 古いほど減点
+
+    return {m, s};
+  }).filter(x=>x.s > 0.8);
+
+  scored.sort((a,b)=>b.s-a.s);
+
+  return scored.slice(0, 4).map(x=>x.m);
+}
+
+function makeMemoryReference(related, topic){
+  if(!related || related.length === 0) return "";
+
+  // 2件まで自然文で触れる（多すぎると不自然）
+  const pick = related.slice(0, 2);
+
+  const lines = [];
+  for(const m of pick){
+    if(m.type === "like"){
+      lines.push(`ラティスは「${m.value}」が好き。`);
+    }else if(m.type === "recent"){
+      lines.push(`最近の話として「${m.value}」がありましたね。`);
+    }else if(m.type === "dislike"){
+      lines.push(`「${m.value}」は苦手、と。`);
+    }else if(m.type === "habit"){
+      lines.push(`習慣として「${m.value}」が挙がっています。`);
+    }
+  }
+  return "……そういえば、" + lines.join(" ");
+}
+
+function makeNextQuestion(topic, userText, related){
+  // なるべく “具体化” させる質問を返す（賢さに見える）
+  if(topic === "カラオケ"){
+    // 直近の話に合わせて分岐
+    if(/最近/.test(userText) && /行った/.test(userText)){
+      return "……なるほど。最近いちばん気持ちよく歌えた曲は何です？ ラティス。";
+    }
+    if(/好き/.test(userText) || /歌う/.test(userText)){
+      return "……どういう曲調が合うんです？ 高音寄り・低音寄り、あるいはバラード寄りですか。";
+    }
+    return "……曲名でもアーティストでも構いません。今、口に出したくなる一曲は？";
+  }
+
+  if(topic === "料理"){
+    return "……今日は作る予定があるんです？ それとも、最近うまくいった一品の話ですか。";
+  }
+
+  if(topic === "育児"){
+    return "……今いちばん困っているのは、睡眠・食事・機嫌、どれです？ ラティス。";
+  }
+
+  if(topic === "システム"){
+    return "……今の挙動で“期待と違う点”を一文で言ってください。そこから原因を切り分けます。";
+  }
+
+  // fallback（賢さの定番：目的確認）
+  return "……今の話、もう少しだけ前提を教えてください。何を一番どうしたい、です？ ラティス。";
+}
+
+/* ========= memory summary ========= */
+function buildMemorySummary(){
+  const by = { like:[], recent:[], dislike:[], habit:[] };
+  for(const m of state.memory){
+    by[m.type] && by[m.type].push(m);
+  }
+  for(const k of Object.keys(by)){
+    by[k].sort((a,b)=>b.ts-a.ts);
+  }
+  const lines = [];
+
+  // 表示は最大それぞれ3件
+  const add = (title, arr)=>{
+    if(arr.length === 0) return;
+    lines.push(`(${title})`);
+    arr.slice(0,3).forEach(x=>lines.push(`・${x.value}`));
+    lines.push("");
+  };
+
+  add("好き", by.like);
+  add("最近の話", by.recent);
+  add("苦手", by.dislike);
+  add("習慣", by.habit);
+
+  // 末尾の空行削除
+  while(lines.length && lines[lines.length-1]==="") lines.pop();
+
+  return { lines, by };
+}
+
+function formatMemoryBlock(summary){
+  return "【記憶】\n" + summary.lines.join("\n");
+}
+
+/* ========= UI helpers ========= */
+function pushSystem(text){
+  state.messages.push({ role:"system", text, ts:Date.now() });
+  renderMessages();
+  saveState();
+}
+function pushUser(text){
+  state.messages.push({ role:"user", text, ts:Date.now() });
+  renderMessages();
+  saveState();
+}
+function pushDebug(text){
+  state.messages.push({ role:"debug", text, ts:Date.now() });
+  renderMessages();
+  saveState();
+}
+
+function renderAll(){
+  renderChips();
+  renderMessages();
+  UI.debugSwitch.classList.toggle("on", !!state.debug);
+}
+
+function renderChips(){
+  const memCount = state.memory.length;
+  const chips = [
+    `<span class="chip"><strong>memory</strong>: ${memCount}</span>`,
+    `<span class="chip"><strong>rel</strong>: ${escapeHtml(state.rel)}</span>`,
+    `<span class="chip"><strong>mode</strong>: ${escapeHtml(state.mode)}</span>`,
+    `<span class="chip"><strong>turns</strong>: ${state.turns}</span>`,
+    `<span class="chip"><strong>topic</strong>: ${escapeHtml(state.topic || "（未設定）")}</span>`,
+  ];
+  UI.chips.innerHTML = chips.join("");
+}
+
+function renderMessages(){
+  UI.chat.innerHTML = "";
+  for(const msg of state.messages){
+    if(msg.role === "debug" && !state.debug) continue;
+
+    const div = document.createElement("div");
+    div.className = "bubble " + (msg.role === "user" ? "user" : msg.role === "debug" ? "debug" : "system");
+    div.textContent = msg.text;
+    UI.chat.appendChild(div);
+  }
+  // scroll to bottom
+  requestAnimationFrame(()=>{
+    window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
+  });
+}
+
+function autosizeTextarea(){
+  const el = UI.input;
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+}
+
+/* ========= state ========= */
+function makeInitialState(){
+  return {
+    mode: "FREE",
+    rel: "C",
+    topic: "（未設定）",
+    turns: 0,
+    debug: false,
+    memory: [],
+    messages: [],
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    // 軽い整合
+    if(!s.mode) s.mode = "FREE";
+    if(!s.rel) s.rel = "C";
+    if(!Array.isArray(s.memory)) s.memory = [];
+    if(!Array.isArray(s.messages)) s.messages = [];
+    if(typeof s.turns !== "number") s.turns = 0;
+    if(typeof s.debug !== "boolean") s.debug = false;
+    if(!s.topic) s.topic = "（未設定）";
+    return s;
+  }catch(e){
+    return null;
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    // ignore
+  }
+}
+
+/* ========= utils ========= */
+function normalize(s){
+  return (s || "")
+    .trim()
+    .replace(/[！!]/g,"!")
+    .replace(/[？?]/g,"?")
+    .replace(/\s+/g," ")
+    .toLowerCase();
+}
+
+function cleanupPhrase(s){
+  if(!s) return "";
+  return s
+    .trim()
+    .replace(/^「|」$/g,"")
+    .replace(/[。．.]+$/g,"")
+    .replace(/^(えっと|あの|その|まあ|なんか)\s*/g,"")
+    .trim();
+}
+
+function cryptoId(){
+  // iOSでも動く軽量ID
+  return "m_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(2,6);
+}
+
+function escapeHtml(str){
+  return (str||"").replace(/[&<>"']/g, s=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[s]));
+}
 </script>
-
 </body>
 </html>
