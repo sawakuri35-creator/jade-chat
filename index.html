@@ -6,685 +6,814 @@
   <title>Jade Chat / 記憶システム優先</title>
   <style>
     :root{
-      --bg1:#071222;
-      --bg2:#071a2e;
-      --panel: rgba(255,255,255,.06);
-      --panel2: rgba(255,255,255,.08);
-      --stroke: rgba(255,255,255,.10);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.65);
-      --blue1: #2d64ff;
-      --blue2: #1f4dd6;
-      --green1:#3ecf8e;
-      --shadow: rgba(0,0,0,.35);
-      --radius: 18px;
-      --radius2: 26px;
+      --bg1:#071426;
+      --bg2:#0b1c33;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.08);
+      --stroke:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.70);
+      --muted2:rgba(255,255,255,.55);
+      --blue1:#2f66ff;
+      --blue2:#3b7bff;
+      --green:#35d0a8;
+      --danger:#ff4d6d;
+      --shadow:0 14px 44px rgba(0,0,0,.45);
+      --radius:22px;
+      --radius2:18px;
+      --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px 600px at 30% 10%, rgba(65,110,255,.18), transparent 55%),
-                  radial-gradient(900px 600px at 70% 20%, rgba(62,207,142,.10), transparent 60%),
+      min-height:100vh;
+      font-family:var(--font);
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 30% 0%, #132f5a 0%, transparent 55%),
+                  radial-gradient(900px 700px at 80% 10%, #0f3a55 0%, transparent 55%),
                   linear-gradient(180deg, var(--bg2), var(--bg1));
-      overflow:hidden;
     }
     .wrap{
-      height:100%;
-      display:flex;
-      flex-direction:column;
-      max-width: 820px;
+      max-width: 860px;
       margin: 0 auto;
-      padding: 18px 14px 16px;
+      padding: 18px 14px 90px;
     }
-
-    /* top header */
-    .topbar{
+    header{
       display:flex;
-      justify-content:space-between;
       align-items:flex-start;
+      justify-content:space-between;
       gap:12px;
-      padding: 10px 10px 6px;
+      margin: 6px 2px 14px;
     }
     .title{
-      line-height:1.2;
-      font-weight: 800;
-      letter-spacing: .2px;
-      font-size: 28px;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .title h1{
+      margin:0;
+      font-size: 26px;
+      letter-spacing:.2px;
+      line-height:1.1;
     }
     .subtitle{
-      margin-top:6px;
-      color: var(--muted);
-      font-size: 14px;
+      color:var(--muted2);
+      font-size:13px;
     }
-
-    .pillrow{
+    .chipRow{
       display:flex;
       flex-wrap:wrap;
-      gap:10px;
-      margin-top: 12px;
+      gap:8px;
+      margin-top:10px;
+      align-items:center;
     }
-    .pill{
-      padding: 10px 14px;
+    .chip{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding:10px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.10);
+      font-size:14px;
       color: var(--muted);
-      font-weight: 700;
-      font-size: 14px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 10px 30px var(--shadow);
+      backdrop-filter: blur(10px);
     }
-    .pill strong{color: var(--text)}
-    .rightcol{
+    .chip strong{ color:var(--text); font-weight:600; margin-right:6px;}
+    .rightControls{
       display:flex;
-      flex-direction:column;
-      align-items:flex-end;
+      align-items:center;
       gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
-    .btn-clear{
-      border:none;
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.12);
-      color: var(--text);
-      font-weight: 800;
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:14px;
       cursor:pointer;
+      backdrop-filter: blur(10px);
+    }
+    .btn.danger{
+      border-color: rgba(255,77,109,.35);
+      color: rgba(255,255,255,.92);
     }
     .toggle{
       display:flex;
       align-items:center;
       gap:10px;
-      padding: 10px 14px;
+      padding:10px 12px;
       border-radius:999px;
-      background: rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.10);
-      color: var(--muted);
-      font-weight:800;
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      color:var(--muted);
       user-select:none;
     }
     .switch{
-      width:46px;height:26px;border-radius:999px;
-      background: rgba(255,255,255,.15);
-      border:1px solid rgba(255,255,255,.15);
+      width:46px; height:26px;
+      background: rgba(255,255,255,.14);
+      border-radius:999px;
       position:relative;
-      flex:none;
-      cursor:pointer;
+      border:1px solid rgba(255,255,255,.14);
+      flex:0 0 auto;
     }
     .knob{
-      width:22px;height:22px;border-radius:50%;
-      background: rgba(255,255,255,.95);
-      position:absolute;top:1px;left:1px;
+      width:22px; height:22px;
+      background: rgba(255,255,255,.92);
+      border-radius:50%;
+      position:absolute;
+      top:1px; left:1px;
       transition: transform .18s ease;
-      box-shadow: 0 10px 20px rgba(0,0,0,.25);
     }
-    .switch.on{background: rgba(62,207,142,.25); border-color: rgba(62,207,142,.30);}
-    .switch.on .knob{transform: translateX(20px);}
+    .switch.on{
+      background: rgba(53,208,168,.35);
+      border-color: rgba(53,208,168,.35);
+    }
+    .switch.on .knob{
+      transform: translateX(20px);
+      background: #eafff8;
+    }
 
-    /* chat area */
     .chat{
-      flex:1;
-      overflow:auto;
-      padding: 8px 6px 0;
-      scroll-behavior:smooth;
-    }
-    .msg{
-      margin: 14px 6px;
+      margin-top:10px;
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:14px;
     }
     .bubble{
       max-width: 92%;
-      border-radius: var(--radius2);
-      padding: 16px 18px;
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 20px 50px var(--shadow);
+      border-radius: var(--radius);
+      padding:16px 18px;
+      line-height:1.6;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(255,255,255,.08);
       backdrop-filter: blur(10px);
       white-space: pre-wrap;
-      line-height: 1.65;
-      font-size: 18px;
-    }
-    .bubble.user{
-      margin-left:auto;
-      background: linear-gradient(180deg, rgba(45,100,255,.85), rgba(31,77,214,.80));
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 22px 56px rgba(0,0,0,.35);
-      font-weight: 800;
+      word-break: break-word;
     }
     .bubble.system{
-      margin: 10px auto 0;
+      align-self:flex-start;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+    }
+    .bubble.user{
+      align-self:flex-end;
+      background: linear-gradient(180deg, rgba(47,102,255,.92), rgba(59,123,255,.92));
+      border-color: rgba(255,255,255,.10);
+    }
+    .bubble.debug{
+      align-self:flex-start;
       background: rgba(255,255,255,.04);
-      color: rgba(255,255,255,.55);
       border-style:dashed;
-      font-size: 15px;
-      max-width: 88%;
-      text-align:center;
-      padding: 12px 14px;
-    }
-
-    .debugline{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 14px;
       color: rgba(255,255,255,.70);
-      background: rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.10);
-      padding: 12px 14px;
-      border-radius: 14px;
-      max-width: 92%;
+      font-size: 13px;
+      box-shadow:none;
     }
-    .debugline.user{margin-left:auto}
-    .debugline.sys{margin-right:auto}
 
-    /* input */
-    .inputbar{
-      padding: 12px 6px 0;
+    .composer{
+      position: fixed;
+      left:0; right:0;
+      bottom: 0;
+      padding: 12px 12px 18px;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,.35) 35%, rgba(0,0,0,.55));
+      backdrop-filter: blur(12px);
     }
-    .inputwrap{
+    .composerInner{
+      max-width: 860px;
+      margin: 0 auto;
       display:flex;
-      gap: 10px;
+      gap:10px;
       align-items:flex-end;
-      padding: 12px;
-      border-radius: 22px;
-      background: rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 20px 60px rgba(0,0,0,.35);
-      backdrop-filter: blur(10px);
     }
     textarea{
       flex:1;
-      border:none;
-      outline:none;
       resize:none;
-      height: 46px;
+      min-height: 52px;
       max-height: 140px;
-      padding: 12px 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
+      padding: 14px 14px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
       color: var(--text);
-      font-size: 18px;
-      line-height: 1.4;
+      outline:none;
+      font-size: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
     }
+    textarea::placeholder{ color: rgba(255,255,255,.45); }
     .send{
+      flex:0 0 auto;
       border:none;
-      background: rgba(62,207,142,.85);
-      border: 1px solid rgba(255,255,255,.10);
-      color: rgba(0,0,0,.80);
-      font-weight: 900;
+      background: rgba(53,208,168,.90);
+      color: rgba(0,0,0,.75);
+      font-weight:700;
       padding: 14px 18px;
-      border-radius: 16px;
+      border-radius: 18px;
       cursor:pointer;
-      min-width: 92px;
-      font-size: 18px;
-      box-shadow: 0 18px 40px rgba(0,0,0,.30);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      font-size: 16px;
+      min-width: 88px;
     }
-    .send:active{transform: translateY(1px)}
+    .send:active{ transform: translateY(1px); }
+    .footerHint{
+      margin-top:8px;
+      text-align:center;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+    }
+    @media (max-width:480px){
+      .title h1{ font-size: 22px; }
+      .bubble{ max-width: 96%; }
+      textarea{ font-size: 15px; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="topbar">
-      <div>
-        <div class="title">Jade Chat / 記憶システム優先</div>
-        <div class="subtitle" id="subtitle">FREEモード（ローカル動作）</div>
+    <header>
+      <div class="title">
+        <h1>Jade Chat / 記憶システム優先</h1>
+        <div class="subtitle">FREEモード（ローカル動作） / 記憶×話題×要約で “賢さ” を出します</div>
 
-        <div class="pillrow" id="pills">
-          <!-- dynamic -->
-        </div>
+        <div class="chipRow" id="chips"></div>
       </div>
 
-      <div class="rightcol">
-        <button class="btn-clear" id="btnClear">記憶クリア</button>
+      <div class="rightControls">
+        <button class="btn danger" id="clearBtn">記憶クリア</button>
 
-        <div class="toggle">
-          debug
-          <div class="switch" id="debugSwitch" role="switch" aria-checked="false" tabindex="0">
-            <div class="knob"></div>
-          </div>
+        <div class="toggle" id="debugToggle">
+          <span>debug</span>
+          <div class="switch" id="debugSwitch"><div class="knob"></div></div>
         </div>
       </div>
-    </div>
+    </header>
 
     <div class="chat" id="chat"></div>
+  </div>
 
-    <div class="inputbar">
-      <div class="inputwrap">
-        <textarea id="input" placeholder="ラティス…？" autocomplete="off"></textarea>
-        <button class="send" id="send">送信</button>
-      </div>
+  <div class="composer">
+    <div class="composerInner">
+      <textarea id="input" placeholder="ラティス…？" rows="1"></textarea>
+      <button class="send" id="sendBtn">送信</button>
     </div>
+    <div class="footerHint">※ローカル保存（localStorage） / 外部通信なし</div>
   </div>
 
 <script>
-(() => {
-  // ====== SETTINGS ======
-  const APP = {
-    mode: "FREE",
-    rel: "C",
-    userName: "ラティス",
-    assistantName: "ジェイド",
-    // Topic lock: 「話題を保持するターン数」
-    topicLockTurns: 4, // ここを増やすと“同じ話題で深掘り”が長く続く
-    // Topic confidence: 0~1（簡易）
-    topicMinConfidence: 0.35,
-  };
+/** =========================
+ *  Jade Chat (FREE/LOCAL)
+ *  - 記憶（好き/最近/苦手/習慣）を自動抽出
+ *  - topic を推定して会話を繋ぐ
+ *  - 返答は「要約→確認→質問」でAI感を出す
+ *  ========================= */
 
-  // ====== STORAGE KEYS ======
-  const K = {
-    state: "jadechat_state_v3",
-    memory: "jadechat_memory_v3",
-    log: "jadechat_log_v3",
-  };
+const STORAGE_KEY = "jade_chat_free_v2";
+const state = loadState() || makeInitialState();
 
-  // ====== DEFAULTS ======
-  const defaultState = {
-    turns: 0,
-    topic: "",
-    topicLockedUntilTurn: 0,
-    topicConfidence: 0,
-    debug: false,
-  };
+const UI = {
+  chat: document.getElementById("chat"),
+  chips: document.getElementById("chips"),
+  input: document.getElementById("input"),
+  sendBtn: document.getElementById("sendBtn"),
+  clearBtn: document.getElementById("clearBtn"),
+  debugToggle: document.getElementById("debugToggle"),
+  debugSwitch: document.getElementById("debugSwitch"),
+};
 
-  const defaultMemory = {
-    likes: [],       // ["歌うのが好き", ...]
-    recents: [],     // ["最近カラオケに行った", ...]
-  };
+init();
 
-  // ====== DOM ======
-  const $chat = document.getElementById("chat");
-  const $input = document.getElementById("input");
-  const $send = document.getElementById("send");
-  const $btnClear = document.getElementById("btnClear");
-  const $pills = document.getElementById("pills");
-  const $debugSwitch = document.getElementById("debugSwitch");
-
-  // ====== LOAD / SAVE ======
-  function loadJSON(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return structuredClone(fallback);
-      const parsed = JSON.parse(raw);
-      return Object.assign(structuredClone(fallback), parsed);
-    }catch(e){
-      return structuredClone(fallback);
-    }
-  }
-  function saveJSON(key, obj){
-    localStorage.setItem(key, JSON.stringify(obj));
+/* ========= init ========= */
+function init(){
+  renderAll();
+  if(state.messages.length === 0){
+    pushSystem("ジェイドが静かにこちらを見ている。");
   }
 
-  let state = loadJSON(K.state, defaultState);
-  let memory = loadJSON(K.memory, defaultMemory);
-  let log = loadJSON(K.log, []);
-
-  // ====== UI HELPERS ======
-  function setDebugUI(on){
-    state.debug = !!on;
-    saveJSON(K.state, state);
-    $debugSwitch.classList.toggle("on", state.debug);
-    $debugSwitch.setAttribute("aria-checked", state.debug ? "true" : "false");
-  }
-
-  function renderPills(){
-    const items = [
-      { label: "memory", value: String(memory.likes.length + memory.recents.length) },
-      { label: "rel", value: APP.rel },
-      { label: "mode", value: APP.mode },
-      { label: "turns", value: String(state.turns) },
-      { label: "topic", value: state.topic || "—" },
-    ];
-    $pills.innerHTML = items.map(x => `
-      <div class="pill"><strong>${x.label}</strong> : ${escapeHtml(x.value)}</div>
-    `).join("");
-  }
-
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
-  }
-
-  function appendBubble(role, text){
-    const wrap = document.createElement("div");
-    wrap.className = "msg";
-
-    const bubble = document.createElement("div");
-    bubble.className = "bubble " + (role === "user" ? "user" : role === "system" ? "system" : "assistant");
-    bubble.textContent = text;
-
-    wrap.appendChild(bubble);
-    $chat.appendChild(wrap);
-    $chat.scrollTop = $chat.scrollHeight;
-  }
-
-  function appendDebug(text, who="sys"){
-    if(!state.debug) return;
-    const wrap = document.createElement("div");
-    wrap.className = "msg";
-    const d = document.createElement("div");
-    d.className = "debugline " + (who === "user" ? "user" : "sys");
-    d.textContent = text;
-    wrap.appendChild(d);
-    $chat.appendChild(wrap);
-    $chat.scrollTop = $chat.scrollHeight;
-  }
-
-  function persistLogEntry(role, text){
-    log.push({ t: Date.now(), role, text });
-    if(log.length > 300) log = log.slice(-300);
-    saveJSON(K.log, log);
-  }
-
-  function rebuildChat(){
-    $chat.innerHTML = "";
-    // 起動メッセージ（固定）
-    appendBubble("assistant", `${APP.assistantName}が静かにこちらを見ている。`);
-    // ログ復元
-    for(const e of log){
-      appendBubble(e.role, e.text);
-    }
-    renderPills();
-  }
-
-  // ====== MEMORY OPS ======
-  function uniqPush(arr, item, max=30){
-    const norm = item.trim();
-    if(!norm) return;
-    const idx = arr.findIndex(x => x === norm);
-    if(idx !== -1) arr.splice(idx, 1);
-    arr.unshift(norm);
-    if(arr.length > max) arr.length = max;
-  }
-
-  function addLike(text){
-    uniqPush(memory.likes, text, 30);
-    saveJSON(K.memory, memory);
-  }
-  function addRecent(text){
-    uniqPush(memory.recents, text, 30);
-    saveJSON(K.memory, memory);
-  }
-
-  function clearAll(){
-    memory = structuredClone(defaultMemory);
-    state.turns = 0;
-    state.topic = "";
-    state.topicLockedUntilTurn = 0;
-    state.topicConfidence = 0;
-    log = [];
-    saveJSON(K.memory, memory);
-    saveJSON(K.state, state);
-    saveJSON(K.log, log);
-    rebuildChat();
-    appendBubble("system", "（記憶を消去した）");
-  }
-
-  // ====== TOPIC DETECTION ======
-  function detectTopic(text){
-    const t = text.trim();
-
-    // キーワードベース（必要なら増やしてOK）
-    const rules = [
-      { topic: "カラオケ", keys: ["カラオケ","歌","歌う","歌った","採点","キー","マイク"] },
-      { topic: "料理", keys: ["料理","作る","作った","レシピ","献立","煮込","焼い","炒め"] },
-      { topic: "睡眠", keys: ["眠","ねむ","寝","起き","夜泣き","昼寝","睡眠"] },
-    ];
-
-    let best = { topic:"", score:0 };
-    for(const r of rules){
-      let score = 0;
-      for(const k of r.keys){
-        if(t.includes(k)) score += 1;
-      }
-      // 「最近カラオケに行った」みたいに強い表現は加点
-      if(r.topic === "カラオケ" && /最近.*カラオケ/.test(t)) score += 2;
-
-      if(score > best.score){
-        best = { topic: r.topic, score };
-      }
-    }
-
-    // 0~1に雑に正規化
-    const confidence = Math.min(1, best.score / 4);
-    return { topic: best.topic, confidence };
-  }
-
-  // Topic Lock を更新する
-  function updateTopicLockFromUser(text){
-    const det = detectTopic(text);
-
-    // 今ロック中なら：強い話題転換が来ない限り保持
-    const locked = state.turns < state.topicLockedUntilTurn;
-
-    if(locked){
-      // ロック中でも、別話題が強く出たら切替（信頼度高い時だけ）
-      if(det.topic && det.topic !== state.topic && det.confidence >= 0.75){
-        state.topic = det.topic;
-        state.topicConfidence = det.confidence;
-        state.topicLockedUntilTurn = state.turns + APP.topicLockTurns;
-      }else{
-        // ロック継続：信頼度は少しずつ減衰
-        state.topicConfidence = Math.max(0, state.topicConfidence - 0.06);
-      }
-      return;
-    }
-
-    // ロック中でないなら：検出できた話題を採用
-    if(det.topic && det.confidence >= APP.topicMinConfidence){
-      state.topic = det.topic;
-      state.topicConfidence = det.confidence;
-      state.topicLockedUntilTurn = state.turns + APP.topicLockTurns;
-    }else{
-      // 何も検出できない：topicは維持するが、弱くなる
-      state.topicConfidence = Math.max(0, state.topicConfidence - 0.08);
-      if(state.topicConfidence <= 0.05){
-        state.topic = "";
-        state.topicLockedUntilTurn = 0;
-      }
-    }
-  }
-
-  // ====== FREE MODE RESPONSE (パターン返答) ======
-  function isMemoryQuery(t){
-    return /覚えてる|覚えてる\?|覚えてる？|記憶|メモ|忘れた/.test(t);
-  }
-
-  function isLikeStatement(t){
-    // 「～が好き」系
-    return /好き/.test(t);
-  }
-
-  function isRecentStatement(t){
-    // 「最近～」系
-    return /^最近/.test(t) || /この前|さっき|昨日|今日/.test(t);
-  }
-
-  function normalizeForMemory(t){
-    // 余計な句読点や空白を軽く整える（強くはやらない）
-    return t.replace(/\s+/g, " ").trim();
-  }
-
-  function memoryDigest(){
-    const likes = memory.likes.slice(0, 5).map(x => `・${x.replace(/^・/,"")}`).join("\n");
-    const recents = memory.recents.slice(0, 5).map(x => `・${x.replace(/^・/,"")}`).join("\n");
-
-    let out = "【記憶】\n";
-    if(memory.likes.length){
-      out += "\n（好き）\n" + likes + "\n";
-    }
-    if(memory.recents.length){
-      out += "\n（最近の話）\n" + recents + "\n";
-    }
-    if(memory.likes.length === 0 && memory.recents.length === 0){
-      out += "\n（まだ記憶はありません）\n";
-    }
-    return out.trimEnd();
-  }
-
-  function jadePreface(){
-    // ジェイドっぽい “抑制・理知的” な前置き（短め）
-    const a = [
-      "……承知しました。",
-      "……なるほど。",
-      "……理解しました。",
-      "……興味深いですね。",
-      "……確認ですね。",
-    ];
-    return a[Math.floor(Math.random()*a.length)];
-  }
-
-  function askFollowUpForTopic(topic){
-    // Topic Lock中の“深掘り”質問
-    switch(topic){
-      case "カラオケ":
-        return "……なるほど。どんな曲を歌うのが多いですか？";
-      case "料理":
-        return "……なるほど。最近はどんな料理を作りましたか？";
-      case "睡眠":
-        return "……なるほど。今いちばん困っているのは、入眠ですか、それとも夜中の覚醒ですか？";
-      default:
-        return "……それで、いま話したいことは何でしょう、ラティス。";
-    }
-  }
-
-  function freeRespond(userText){
-    const t = userText.trim();
-
-    // 1) 記憶問い合わせ
-    if(isMemoryQuery(t)){
-      const pre = jadePreface();
-      return `${pre}\n${memoryDigest()}\n\n他にも、覚えておいてほしい「好き」や「最近の話」があれば、一文で教えてください。`;
-    }
-
-    // 2) 記憶追加ルール：like / recent
-    let didStore = false;
-    let storeLines = [];
-
-    if(isLikeStatement(t)){
-      // 例：「歌うのが好き」→ likesへ
-      const s = normalizeForMemory(t);
-      addLike(s);
-      didStore = true;
-      storeLines.push("記憶に追加しました。");
-    }
-
-    if(isRecentStatement(t)){
-      // 例：「最近カラオケに行った」→ recentsへ
-      const s = normalizeForMemory(t);
-      addRecent(s);
-      didStore = true;
-      // recentは“今の話は記憶しておきます”の言い回し
-      storeLines.push("今の話は記憶しておきます。");
-    }
-
-    // 3) Topic Lock を更新（ユーザー発話を見て）
-    updateTopicLockFromUser(t);
-    saveJSON(K.state, state);
-
-    // 4) 返答本体：ロック中なら深掘り、そうでなければ汎用
-    const pre = jadePreface();
-
-    // 「好き/最近」両方入ってたら、保存メッセージをまとめて自然に
-    let mid = "";
-    if(didStore){
-      mid = storeLines.length === 1 ? storeLines[0] : storeLines.join("\n");
-    }
-
-    const follow = askFollowUpForTopic(state.topic);
-
-    // “同じ質問を繰り返す”のを避けるため、直前のジェイド文と被るなら別の汎用質問に逃がす
-    const lastAssistant = [...log].reverse().find(x => x.role === "assistant")?.text || "";
-    let finalFollow = follow;
-    if(lastAssistant.includes(follow)){
-      finalFollow = "……それで、どういうところがいちばん楽しかったです？";
-    }
-
-    // 組み立て
-    if(mid){
-      return `${pre}\n${mid}\n\n${finalFollow}`;
-    }
-    return `${pre}\n\n${finalFollow}`;
-  }
-
-  // ====== SEND ======
-  function send(){
-    const text = $input.value.trim();
-    if(!text) return;
-
-    // ユーザー発話
-    appendBubble("user", text);
-    persistLogEntry("user", text);
-
-    // turns更新（ユーザーが送った回数）
-    state.turns += 1;
-    saveJSON(K.state, state);
-
-    // debug
-    appendDebug(`[debug] 記憶ロードOK / rel=${APP.rel} / turns=${state.turns} / mode=${APP.mode} / topic=${state.topic || "—"} / lockUntil=${state.topicLockedUntilTurn}`, "sys");
-
-    // FREE返答
-    const reply = freeRespond(text);
-
-    appendBubble("assistant", reply);
-    persistLogEntry("assistant", reply);
-
-    renderPills();
-    $input.value = "";
-    autoResize();
-  }
-
-  function autoResize(){
-    $input.style.height = "46px";
-    const h = Math.min(140, $input.scrollHeight);
-    $input.style.height = h + "px";
-  }
-
-  // ====== EVENTS ======
-  $send.addEventListener("click", send);
-  $input.addEventListener("keydown", (e) => {
+  // events
+  UI.sendBtn.addEventListener("click", onSend);
+  UI.input.addEventListener("keydown", (e)=>{
     if(e.key === "Enter" && !e.shiftKey){
       e.preventDefault();
-      send();
+      onSend();
     }
   });
-  $input.addEventListener("input", autoResize);
+  UI.input.addEventListener("input", autosizeTextarea);
 
-  $btnClear.addEventListener("click", () => {
-    if(confirm("記憶と会話ログを消去します。よろしいですか？")){
-      clearAll();
-    }
+  UI.clearBtn.addEventListener("click", ()=>{
+    state.memory = [];
+    state.topic = "（未設定）";
+    state.turns = 0;
+    state.messages = [];
+    saveState();
+    renderAll();
+    pushSystem("（記憶を消去した）");
+    pushSystem("ジェイドが静かにこちらを見ている。");
   });
 
-  function toggleDebug(){
-    setDebugUI(!state.debug);
-    renderPills();
+  UI.debugToggle.addEventListener("click", ()=>{
+    state.debug = !state.debug;
+    saveState();
+    renderAll();
+  });
+
+  autosizeTextarea();
+}
+
+/* ========= handlers ========= */
+function onSend(){
+  const text = (UI.input.value || "").trim();
+  if(!text) return;
+
+  UI.input.value = "";
+  autosizeTextarea();
+
+  // user msg
+  pushUser(text);
+
+  // process
+  state.turns += 1;
+
+  const analysis = analyzeUserText(text);
+  if(state.debug){
+    pushDebug(`[debug] turns=${state.turns} / topic=${analysis.topic || state.topic} / memoryItems+${analysis.newMemoryItems.length}`);
   }
-  $debugSwitch.addEventListener("click", toggleDebug);
-  $debugSwitch.addEventListener("keydown", (e) => {
-    if(e.key === "Enter" || e.key === " "){
-      e.preventDefault();
-      toggleDebug();
-    }
-  });
 
-  // ====== BOOT ======
-  function boot(){
-    // 初回起動の debug 表示
-    setDebugUI(state.debug);
-
-    rebuildChat();
-    appendDebug(`[debug] 起動OK / memoryItems=${memory.likes.length + memory.recents.length} / rel=${APP.rel} / turns=${state.turns} / mode=${APP.mode}`, "sys");
-    renderPills();
-    autoResize();
+  // update topic
+  if(analysis.shouldUpdateTopic && analysis.topic){
+    state.topic = analysis.topic;
   }
 
-  boot();
-})();
+  // update memory
+  for(const m of analysis.newMemoryItems){
+    upsertMemory(m);
+  }
+
+  // generate reply
+  const reply = generateJadeReply(text, analysis);
+  pushSystem(reply);
+
+  saveState();
+  renderChips();
+}
+
+/* ========= analysis ========= */
+
+// 相槌・短文：topic更新しない＆記憶にも入れない
+const STOP_WORDS = new Set([
+  "うん","うーん","はい","そう","そうだね","なるほど","へえ","OK","おっけー","了解","りょ","りょーかい","ありがとう","ありがと","ごめん","すみません",
+  "わかった","わかりました","たしかに","それな","草","w","ww","www"
+]);
+
+function analyzeUserText(text){
+  const norm = normalize(text);
+
+  const isStop = STOP_WORDS.has(norm) || norm.length <= 2;
+
+  // topic推定（軽量）
+  const topic = inferTopic(norm);
+
+  // 記憶抽出（軽量ルール）
+  const newMemoryItems = isStop ? [] : extractMemoryItems(text, norm);
+
+  // topic更新条件：相槌・短すぎ・疑問だけは更新しない（基本）
+  let shouldUpdateTopic = true;
+  if(isStop) shouldUpdateTopic = false;
+
+  // 「覚えてる？」みたいなメタ質問は topic を変えない
+  if(/覚えてる|覚えてます|記憶|メモ|保存/.test(norm)) shouldUpdateTopic = false;
+
+  // ただの一言（名詞1語）でも topic は変えにくい（暴発防止）
+  if(norm.length <= 4) shouldUpdateTopic = false;
+
+  return { topic, shouldUpdateTopic, newMemoryItems, isStop };
+}
+
+function inferTopic(norm){
+  // 代表トピック辞書
+  const TOPIC_RULES = [
+    { topic:"カラオケ", re: /(カラオケ|歌|歌う|唄|曲|採点|音程|ハモ|キー|高音|低音|DAM|JOYSOUND)/ },
+    { topic:"料理", re: /(料理|作る|レシピ|煮|焼|炒|切|包丁|鍋|フライパン|オムライス|デミ|味噌|調味料)/ },
+    { topic:"育児", re: /(赤ちゃん|👶|寝|睡眠|授乳|ミルク|おむつ|保育園|夜泣き|離乳食)/ },
+    { topic:"仕事", re: /(仕事|職場|勤務|夜勤|シフト|看護|特養|患者|業務)/ },
+    { topic:"システム", re: /(GitHub|Cloudflare|Workers|KV|localStorage|HTML|CSS|JavaScript|デプロイ|バインディング|コード)/ },
+  ];
+  for(const r of TOPIC_RULES){
+    if(r.re.test(norm)) return r.topic;
+  }
+
+  // fallback：文の中心語っぽいものをざっくり
+  // ひらがなだけ等は避ける
+  if(norm.length >= 6){
+    const noun = pickKeyword(norm);
+    if(noun) return noun;
+  }
+  return null;
+}
+
+function pickKeyword(norm){
+  // 超簡易：カタカナ・漢字を含む長めの塊を探す
+  const m = norm.match(/[一-龠々〆ヵヶーA-Za-z0-9]{2,}/g);
+  if(!m) return null;
+  // 長い順に
+  m.sort((a,b)=>b.length-a.length);
+  const pick = m.find(x=>x.length>=2 && !/^(それ|これ|あれ|ここ|そこ|どこ|私|ぼく|俺|あなた|君|ラティス)$/.test(x));
+  return pick || null;
+}
+
+function extractMemoryItems(original, norm){
+  const items = [];
+
+  // 好き
+  // 例：「歌うのが好き」「料理が好き」「〇〇好き」
+  let m;
+  m = original.match(/(.+?)(が|のが)\s*好き/);
+  if(m){
+    const val = cleanupPhrase(m[1]);
+    if(val) items.push(memItem("like", val, "user"));
+  }else{
+    m = original.match(/好き[だです]?\s*(.+)/);
+    if(m){
+      const val = cleanupPhrase(m[1]);
+      if(val) items.push(memItem("like", val, "user"));
+    }
+  }
+
+  // 最近の話
+  // 例：「最近カラオケ行った」「この前〜した」
+  if(/最近|この前|さっき|きのう|昨日|今日|先週|今週|今朝|今夜/.test(norm)){
+    const val = cleanupPhrase(original);
+    if(val) items.push(memItem("recent", val, "user"));
+  }
+
+  // 苦手
+  m = original.match(/(.+?)(が|は)\s*苦手/);
+  if(m){
+    const val = cleanupPhrase(m[1]);
+    if(val) items.push(memItem("dislike", val, "user"));
+  }
+
+  // 習慣・よくやる
+  // 「よく〜する」「いつも〜」「だいたい〜」
+  if(/よく|いつも|だいたい|毎日|毎週|毎月/.test(norm)){
+    const val = cleanupPhrase(original);
+    if(val) items.push(memItem("habit", val, "user"));
+  }
+
+  // “うん”みたいなものを弾く
+  return items.filter(x=>{
+    const v = normalize(x.value);
+    if(!v) return false;
+    if(STOP_WORDS.has(v)) return false;
+    if(v.length <= 2) return false;
+    return true;
+  });
+}
+
+function memItem(type, value, source){
+  return {
+    id: cryptoId(),
+    type,        // like / recent / dislike / habit
+    value,
+    source,
+    ts: Date.now(),
+  };
+}
+
+function upsertMemory(item){
+  // 同種・同内容は更新（重複防止）
+  const key = normalize(item.value);
+  const idx = state.memory.findIndex(m => m.type === item.type && normalize(m.value) === key);
+  if(idx >= 0){
+    state.memory[idx].ts = Date.now();
+    state.memory[idx].value = item.value; // 少し整形が変わっても上書き
+  }else{
+    state.memory.push(item);
+  }
+
+  // 最大件数（ローカル負荷対策）
+  const MAX = 60;
+  if(state.memory.length > MAX){
+    // 古い順に落とす
+    state.memory.sort((a,b)=>a.ts-b.ts);
+    state.memory = state.memory.slice(state.memory.length - MAX);
+  }
+}
+
+/* ========= reply ========= */
+
+function generateJadeReply(userText, analysis){
+  const norm = normalize(userText);
+
+  // メタ質問：覚えてる？
+  if(/覚えてる|覚えてます|記憶/.test(norm)){
+    const summary = buildMemorySummary();
+    if(summary.lines.length === 0){
+      return "……確認ですね。\n今のところ、記憶として残している項目はありません。必要なら、一文で教えてください、ラティス。";
+    }
+    return "……確認ですね。\n" + formatMemoryBlock(summary) + "\n\n他にも、覚えておいてほしい「好き」や「最近の話」があれば、一文で教えてください。";
+  }
+
+  // 相槌には静かに返す（topic変えない）
+  if(analysis.isStop){
+    return "……承知しました。では、続けましょう、ラティス。";
+  }
+
+  // 直近の話題に合わせて「要約→質問」
+  const topic = state.topic && state.topic !== "（未設定）" ? state.topic : (analysis.topic || "（未設定）");
+
+  // “AIっぽい賢さ”の核：関連記憶を引いて返す
+  const related = retrieveRelatedMemory(topic, userText);
+
+  // 返答の骨格
+  // 1) 観測（短い要約）
+  // 2) 記憶参照（あれば）
+  // 3) 次の質問（具体化）
+  const observation = makeObservation(userText, topic);
+  const memRef = makeMemoryReference(related, topic);
+
+  const q = makeNextQuestion(topic, userText, related);
+
+  // 組み立て（ジェイドらしく：抑制＋知的＋少し皮肉は控えめ）
+  let out = "";
+  out += observation;
+
+  if(memRef){
+    out += "\n\n" + memRef;
+  }
+
+  out += "\n\n" + q;
+  return out.trim();
+}
+
+function makeObservation(userText, topic){
+  // 例：「最近カラオケに行った」→認識＋一言
+  // あまり褒めすぎず、淡々と。
+  if(topic === "カラオケ"){
+    if(/行った/.test(userText)) return "……なるほど。カラオケですか。";
+    if(/歌/.test(userText)) return "……歌の話ですね。";
+    return "……話題はカラオケ、で合っていますね。";
+  }
+  if(topic === "料理"){
+    return "……料理の話ですね。";
+  }
+  if(topic === "育児"){
+    return "……育児の話、と理解しました。";
+  }
+  if(topic === "システム"){
+    return "……実装の話ですね。状況を整理しましょう。";
+  }
+  // fallback
+  return "……承知しました。";
+}
+
+function retrieveRelatedMemory(topic, userText){
+  const normTopic = normalize(topic);
+  const normText = normalize(userText);
+
+  // スコアリング：topic一致/キーワード一致/新しさ
+  const now = Date.now();
+  const scored = state.memory.map(m=>{
+    let s = 0;
+    const v = normalize(m.value);
+
+    // topicが含まれていれば加点
+    if(normTopic && v.includes(normTopic)) s += 3;
+    if(normText && v.includes(normTopic)) s += 2;
+
+    // キーワード：カラオケ系
+    if(topic === "カラオケ"){
+      if(/[歌曲キー高音低音ハモ音程]/.test(v)) s += 2;
+    }
+    // 料理系
+    if(topic === "料理"){
+      if(/[料理レシピ煮焼炒鍋フライパン]/.test(v)) s += 2;
+    }
+
+    // 種別優先：like/recentを少し強め
+    if(m.type === "like") s += 1.3;
+    if(m.type === "recent") s += 1.1;
+
+    // 新しさ
+    const ageH = Math.max(1, (now - m.ts) / 3600000);
+    s += Math.max(0, 2 - Math.log10(ageH+1)); // 古いほど減点
+
+    return {m, s};
+  }).filter(x=>x.s > 0.8);
+
+  scored.sort((a,b)=>b.s-a.s);
+
+  return scored.slice(0, 4).map(x=>x.m);
+}
+
+function makeMemoryReference(related, topic){
+  if(!related || related.length === 0) return "";
+
+  // 2件まで自然文で触れる（多すぎると不自然）
+  const pick = related.slice(0, 2);
+
+  const lines = [];
+  for(const m of pick){
+    if(m.type === "like"){
+      lines.push(`ラティスは「${m.value}」が好き。`);
+    }else if(m.type === "recent"){
+      lines.push(`最近の話として「${m.value}」がありましたね。`);
+    }else if(m.type === "dislike"){
+      lines.push(`「${m.value}」は苦手、と。`);
+    }else if(m.type === "habit"){
+      lines.push(`習慣として「${m.value}」が挙がっています。`);
+    }
+  }
+  return "……そういえば、" + lines.join(" ");
+}
+
+function makeNextQuestion(topic, userText, related){
+  // なるべく “具体化” させる質問を返す（賢さに見える）
+  if(topic === "カラオケ"){
+    // 直近の話に合わせて分岐
+    if(/最近/.test(userText) && /行った/.test(userText)){
+      return "……なるほど。最近いちばん気持ちよく歌えた曲は何です？ ラティス。";
+    }
+    if(/好き/.test(userText) || /歌う/.test(userText)){
+      return "……どういう曲調が合うんです？ 高音寄り・低音寄り、あるいはバラード寄りですか。";
+    }
+    return "……曲名でもアーティストでも構いません。今、口に出したくなる一曲は？";
+  }
+
+  if(topic === "料理"){
+    return "……今日は作る予定があるんです？ それとも、最近うまくいった一品の話ですか。";
+  }
+
+  if(topic === "育児"){
+    return "……今いちばん困っているのは、睡眠・食事・機嫌、どれです？ ラティス。";
+  }
+
+  if(topic === "システム"){
+    return "……今の挙動で“期待と違う点”を一文で言ってください。そこから原因を切り分けます。";
+  }
+
+  // fallback（賢さの定番：目的確認）
+  return "……今の話、もう少しだけ前提を教えてください。何を一番どうしたい、です？ ラティス。";
+}
+
+/* ========= memory summary ========= */
+function buildMemorySummary(){
+  const by = { like:[], recent:[], dislike:[], habit:[] };
+  for(const m of state.memory){
+    by[m.type] && by[m.type].push(m);
+  }
+  for(const k of Object.keys(by)){
+    by[k].sort((a,b)=>b.ts-a.ts);
+  }
+  const lines = [];
+
+  // 表示は最大それぞれ3件
+  const add = (title, arr)=>{
+    if(arr.length === 0) return;
+    lines.push(`(${title})`);
+    arr.slice(0,3).forEach(x=>lines.push(`・${x.value}`));
+    lines.push("");
+  };
+
+  add("好き", by.like);
+  add("最近の話", by.recent);
+  add("苦手", by.dislike);
+  add("習慣", by.habit);
+
+  // 末尾の空行削除
+  while(lines.length && lines[lines.length-1]==="") lines.pop();
+
+  return { lines, by };
+}
+
+function formatMemoryBlock(summary){
+  return "【記憶】\n" + summary.lines.join("\n");
+}
+
+/* ========= UI helpers ========= */
+function pushSystem(text){
+  state.messages.push({ role:"system", text, ts:Date.now() });
+  renderMessages();
+  saveState();
+}
+function pushUser(text){
+  state.messages.push({ role:"user", text, ts:Date.now() });
+  renderMessages();
+  saveState();
+}
+function pushDebug(text){
+  state.messages.push({ role:"debug", text, ts:Date.now() });
+  renderMessages();
+  saveState();
+}
+
+function renderAll(){
+  renderChips();
+  renderMessages();
+  UI.debugSwitch.classList.toggle("on", !!state.debug);
+}
+
+function renderChips(){
+  const memCount = state.memory.length;
+  const chips = [
+    `<span class="chip"><strong>memory</strong>: ${memCount}</span>`,
+    `<span class="chip"><strong>rel</strong>: ${escapeHtml(state.rel)}</span>`,
+    `<span class="chip"><strong>mode</strong>: ${escapeHtml(state.mode)}</span>`,
+    `<span class="chip"><strong>turns</strong>: ${state.turns}</span>`,
+    `<span class="chip"><strong>topic</strong>: ${escapeHtml(state.topic || "（未設定）")}</span>`,
+  ];
+  UI.chips.innerHTML = chips.join("");
+}
+
+function renderMessages(){
+  UI.chat.innerHTML = "";
+  for(const msg of state.messages){
+    if(msg.role === "debug" && !state.debug) continue;
+
+    const div = document.createElement("div");
+    div.className = "bubble " + (msg.role === "user" ? "user" : msg.role === "debug" ? "debug" : "system");
+    div.textContent = msg.text;
+    UI.chat.appendChild(div);
+  }
+  // scroll to bottom
+  requestAnimationFrame(()=>{
+    window.scrollTo({ top: document.body.scrollHeight, behavior:"smooth" });
+  });
+}
+
+function autosizeTextarea(){
+  const el = UI.input;
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+}
+
+/* ========= state ========= */
+function makeInitialState(){
+  return {
+    mode: "FREE",
+    rel: "C",
+    topic: "（未設定）",
+    turns: 0,
+    debug: false,
+    memory: [],
+    messages: [],
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    // 軽い整合
+    if(!s.mode) s.mode = "FREE";
+    if(!s.rel) s.rel = "C";
+    if(!Array.isArray(s.memory)) s.memory = [];
+    if(!Array.isArray(s.messages)) s.messages = [];
+    if(typeof s.turns !== "number") s.turns = 0;
+    if(typeof s.debug !== "boolean") s.debug = false;
+    if(!s.topic) s.topic = "（未設定）";
+    return s;
+  }catch(e){
+    return null;
+  }
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    // ignore
+  }
+}
+
+/* ========= utils ========= */
+function normalize(s){
+  return (s || "")
+    .trim()
+    .replace(/[！!]/g,"!")
+    .replace(/[？?]/g,"?")
+    .replace(/\s+/g," ")
+    .toLowerCase();
+}
+
+function cleanupPhrase(s){
+  if(!s) return "";
+  return s
+    .trim()
+    .replace(/^「|」$/g,"")
+    .replace(/[。．.]+$/g,"")
+    .replace(/^(えっと|あの|その|まあ|なんか)\s*/g,"")
+    .trim();
+}
+
+function cryptoId(){
+  // iOSでも動く軽量ID
+  return "m_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(2,6);
+}
+
+function escapeHtml(str){
+  return (str||"").replace(/[&<>"']/g, s=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[s]));
+}
 </script>
 </body>
 </html>
