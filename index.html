@@ -2,545 +2,651 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Jade Chat / 記憶システム優先</title>
-  <meta name="theme-color" content="#0b1220" />
   <style>
     :root{
-      --bg:#07101f;
-      --panel:#0e1a2f;
-      --bubble-ai:#1a2a44;
-      --bubble-user:#2b6cff;
-      --text:#e9eef7;
-      --muted:#a9b7d0;
-      --line:rgba(255,255,255,.08);
-      --btn:#22c55e;
-      --btnText:#062012;
-      --chip:#0f203c;
-      --shadow:0 10px 30px rgba(0,0,0,.25);
-      --radius:18px;
+      --bg1:#08101f; --bg2:#061224;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --accent:#2f6bff;
+      --accent2:#1f58e6;
+      --border: rgba(255,255,255,.10);
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 24px;
+      --mono: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      --sans: -apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 700px at 30% 0%, rgba(43,108,255,.18), transparent 55%),
-                  radial-gradient(900px 600px at 80% 20%, rgba(34,197,94,.12), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-      min-height:100vh;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1100px 700px at 15% 0%, rgba(47,107,255,.20), transparent 60%),
+        radial-gradient(900px 700px at 85% 25%, rgba(80,190,255,.14), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      overflow:hidden;
     }
-    .wrap{
-      max-width:900px;
-      margin:0 auto;
-      padding:14px 14px calc(110px + env(safe-area-inset-bottom));
-    }
-    header{
-      position:sticky;
-      top:0;
-      z-index:10;
-      backdrop-filter: blur(10px);
-      background: linear-gradient(to bottom, rgba(7,16,31,.92), rgba(7,16,31,.55));
-      padding:10px 0 12px;
-      margin-bottom:8px;
-    }
-    .topRow{
+    .app{
+      height:100%;
       display:flex;
-      align-items:center;
+      flex-direction:column;
+      padding: 18px 16px 14px;
+      gap: 12px;
+      max-width: 880px;
+      margin: 0 auto;
+    }
+    .top{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      padding-top: 2px;
+    }
+    .titleRow{
+      display:flex;
+      align-items:flex-end;
       justify-content:space-between;
-      gap:10px;
+      gap: 12px;
     }
     .title{
-      font-size:22px;
-      font-weight:700;
+      font-size: 22px;
+      font-weight: 700;
       letter-spacing:.2px;
     }
     .subtitle{
-      font-size:13px;
-      color:var(--muted);
-      margin-top:2px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
     }
-    .chips{
+    .pillRow{
       display:flex;
       flex-wrap:wrap;
-      gap:8px;
-      margin-top:10px;
+      gap: 10px;
       align-items:center;
     }
-    .chip{
-      background: rgba(15,32,60,.85);
-      border:1px solid var(--line);
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:14px;
-      color:var(--text);
-      box-shadow: 0 6px 18px rgba(0,0,0,.12);
-    }
-    .chip strong{font-weight:700}
-    .chipBtn{
-      cursor:pointer;
+    .pill{
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      font-size: 13px;
+      color: rgba(255,255,255,.86);
+      display:flex;
+      align-items:center;
+      gap: 8px;
       user-select:none;
-      background: rgba(255,255,255,.06);
     }
-    .chipBtn:active{transform: translateY(1px)}
+    .pill b{font-weight:700; color: rgba(255,255,255,.92)}
     .toggle{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:8px 12px;
-    }
-    .switch{
-      width:48px;height:26px;border-radius:999px;
+      width: 44px; height: 26px;
+      border-radius: 999px;
       background: rgba(255,255,255,.12);
-      border:1px solid var(--line);
+      border: 1px solid var(--border);
       position:relative;
-      flex:0 0 auto;
+      flex: 0 0 auto;
+      cursor:pointer;
     }
-    .knob{
-      position:absolute;top:2px;left:2px;
-      width:22px;height:22px;border-radius:50%;
-      background:#fff;
-      transition:.18s ease;
+    .toggle::after{
+      content:"";
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.92);
+      position:absolute;
+      top: 2px; left: 2px;
+      transition: transform .2s ease;
+      box-shadow: 0 6px 14px rgba(0,0,0,.35);
     }
-    .switch.on{background: rgba(43,108,255,.35)}
-    .switch.on .knob{left:24px}
+    .toggle.on{
+      background: rgba(47,107,255,.28);
+      border-color: rgba(47,107,255,.45);
+    }
+    .toggle.on::after{ transform: translateX(18px); }
+    .btnClear{
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid var(--border);
+      color: rgba(255,255,255,.9);
+      font-size: 14px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
+    .btnClear:active{transform: translateY(1px)}
     .chat{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      margin-top:8px;
+      flex:1;
+      overflow:auto;
+      padding: 6px 2px 10px;
+      scroll-behavior:smooth;
     }
     .bubble{
-      max-width:88%;
-      padding:14px 16px;
-      border-radius: var(--radius);
-      border:1px solid var(--line);
-      box-shadow: var(--shadow);
-      line-height:1.65;
-      font-size:18px;
-      white-space:pre-wrap;
-      word-wrap:break-word;
+      max-width: 92%;
+      padding: 16px 16px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+      margin: 10px 0;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-    .ai{
-      align-self:flex-start;
-      background: rgba(26,42,68,.85);
+    .bubble.user{
+      margin-left:auto;
+      background: linear-gradient(180deg, rgba(47,107,255,.95), rgba(31,88,230,.92));
+      border-color: rgba(255,255,255,.18);
+      color: rgba(255,255,255,.95);
     }
-    .user{
-      align-self:flex-end;
-      background: rgba(43,108,255,.85);
+    .bubble.sys{
+      margin-right:auto;
+      background: rgba(255,255,255,.06);
+      border-style:dashed;
+      color: rgba(255,255,255,.68);
+      text-align:center;
+      font-size: 13px;
     }
-    .debugLine{
-      align-self:flex-start;
-      max-width:95%;
-      padding:10px 14px;
-      border-radius:14px;
-      border:1px dashed rgba(255,255,255,.18);
-      color: rgba(233,238,247,.92);
-      background: rgba(0,0,0,.15);
-      font-size:14px;
-      line-height:1.5;
-      box-shadow: none;
+    .bubble.debug{
+      margin-right:auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(255,255,255,.80);
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.10);
     }
-
     .composer{
-      position:fixed;
-      left:0;right:0;bottom:0;
-      padding:12px 14px calc(12px + env(safe-area-inset-bottom));
-      background: linear-gradient(to top, rgba(7,16,31,.95), rgba(7,16,31,.60));
-      border-top:1px solid var(--line);
-      backdrop-filter: blur(10px);
-      z-index:20;
-    }
-    .composerInner{
-      max-width:900px;
-      margin:0 auto;
       display:flex;
-      gap:10px;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       align-items:center;
     }
-    input[type="text"]{
+    .input{
       flex:1;
-      height:52px;
-      border-radius:16px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      padding:0 14px;
-      font-size:18px;
-      outline:none;
-    }
-    input::placeholder{color: rgba(169,183,208,.85)}
-    button{
-      height:52px;
-      padding:0 18px;
       border:none;
-      border-radius:16px;
-      background: var(--btn);
-      color: var(--btnText);
-      font-weight:800;
-      font-size:18px;
+      outline:none;
+      background: transparent;
+      color: rgba(255,255,255,.92);
+      font-size: 16px;
+      padding: 8px 10px;
+    }
+    .send{
+      width: 92px;
+      padding: 12px 0;
+      border:none;
+      border-radius: 14px;
+      background: rgba(86, 210, 162, .92);
+      color: rgba(0,0,0,.78);
+      font-weight: 800;
+      font-size: 16px;
       cursor:pointer;
-      box-shadow: 0 10px 26px rgba(34,197,94,.18);
+      box-shadow: 0 14px 24px rgba(0,0,0,.25);
     }
-    button:active{transform: translateY(1px)}
-    .hint{
-      margin-top:8px;
-      font-size:12px;
-      color: rgba(169,183,208,.85);
-      max-width:900px;
-      margin-left:auto;
-      margin-right:auto;
-    }
+    .send:active{transform: translateY(1px)}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="topRow">
+  <div class="app">
+    <div class="top">
+      <div class="titleRow">
         <div>
           <div class="title">Jade Chat / 記憶システム優先</div>
-          <div class="subtitle" id="modeLine">FREEモード（ローカル動作）</div>
+          <div class="subtitle">FREEモード（ローカル動作）</div>
         </div>
-        <div class="chip chipBtn" id="btnClear">記憶クリア</div>
+        <button class="btnClear" id="btnClear">記憶クリア</button>
       </div>
 
-      <div class="chips">
-        <div class="chip"><strong>memory</strong> : <span id="chipMemory">0</span></div>
-        <div class="chip"><strong>rel</strong> : <span id="chipRel">C</span></div>
-        <div class="chip"><strong>mode</strong> : <span id="chipMode">FREE</span></div>
-        <div class="chip"><strong>turns</strong> : <span id="chipTurns">0</span></div>
-
-        <div class="chip toggle">
-          <div>debug</div>
-          <div class="switch" id="debugSwitch" role="switch" aria-checked="false">
-            <div class="knob"></div>
-          </div>
+      <div class="pillRow">
+        <div class="pill"><span>memory :</span><b id="pillMemory">0</b></div>
+        <div class="pill"><span>rel :</span><b id="pillRel">C</b></div>
+        <div class="pill"><span>mode :</span><b id="pillMode">FREE</b></div>
+        <div class="pill"><span>turns :</span><b id="pillTurns">0</b></div>
+        <div class="pill">
+          <span>topic :</span><b id="pillTopic">—</b>
+        </div>
+        <div class="pill">
+          <span>debug</span>
+          <div class="toggle" id="debugToggle" title="debug表示"></div>
         </div>
       </div>
-    </header>
-
-    <main class="chat" id="chat"></main>
-  </div>
-
-  <div class="composer">
-    <div class="composerInner">
-      <input id="input" type="text" placeholder="ラティス…？" autocomplete="off" />
-      <button id="send">送信</button>
     </div>
-    <div class="hint">※ FREEモードは“ローカルの簡易会話”。AI(API)接続はしていません。</div>
+
+    <div class="chat" id="chat"></div>
+
+    <div class="composer">
+      <input class="input" id="input" placeholder="ラティス…？" autocomplete="off" />
+      <button class="send" id="send">送信</button>
+    </div>
   </div>
 
 <script>
-(() => {
-  const STORAGE = {
-    state: "jadechat_state_v1",
-    memory: "jadechat_memory_v1",
-    chat: "jadechat_chatlog_v1"
-  };
+/** =========================
+ *  Jade Chat (FREE / Local)
+ *  - 記憶(好き/事実) + topic(話題) + turns
+ *  - 「好き」誤爆防止（質問文を記憶しない）
+ *  - 返事が不自然になりにくい会話分岐
+ * ========================= */
 
-  const $chat = document.getElementById("chat");
-  const $input = document.getElementById("input");
-  const $send = document.getElementById("send");
-  const $chipMemory = document.getElementById("chipMemory");
-  const $chipRel = document.getElementById("chipRel");
-  const $chipMode = document.getElementById("chipMode");
-  const $chipTurns = document.getElementById("chipTurns");
-  const $btnClear = document.getElementById("btnClear");
-  const $debugSwitch = document.getElementById("debugSwitch");
+const STORAGE_KEY = "jade_chat_state_v2";
+const USER_NAME = "ラティス";
+const MODE = "FREE"; // 固定
+const DEFAULT_REL = "C";
 
-  // --------- state ----------
-  const defaultState = {
-    mode: "FREE",
-    rel: "C",
-    turns: 0,
-    debug: false,
-  };
-
-  function loadJSON(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      if(!raw) return fallback;
-      return JSON.parse(raw);
-    }catch(e){
-      return fallback;
-    }
+// ====== State ======
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){
+    return {
+      rel: DEFAULT_REL,
+      turns: 0,
+      debug: false,
+      topic: null,
+      memory: {
+        likes: [],  // ["歌う", "料理", ...]
+        facts: []   // ["最近カラオケに行った", ...]
+      }
+    };
   }
-  function saveJSON(key, value){
-    localStorage.setItem(key, JSON.stringify(value));
+  try{
+    const st = JSON.parse(raw);
+    // 最低限の補正
+    st.rel ??= DEFAULT_REL;
+    st.turns ??= 0;
+    st.debug ??= false;
+    st.topic ??= null;
+    st.memory ??= {likes:[],facts:[]};
+    st.memory.likes ??= [];
+    st.memory.facts ??= [];
+    return st;
+  }catch(e){
+    return {
+      rel: DEFAULT_REL, turns:0, debug:false, topic:null,
+      memory:{likes:[],facts:[]}
+    };
+  }
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+let state = loadState();
+
+// ====== UI ======
+const chatEl = document.getElementById("chat");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const btnClear = document.getElementById("btnClear");
+const pillMemory = document.getElementById("pillMemory");
+const pillRel = document.getElementById("pillRel");
+const pillMode = document.getElementById("pillMode");
+const pillTurns = document.getElementById("pillTurns");
+const pillTopic = document.getElementById("pillTopic");
+const debugToggle = document.getElementById("debugToggle");
+
+function updatePills(){
+  const memCount = (state.memory.likes.length + state.memory.facts.length);
+  pillMemory.textContent = memCount;
+  pillRel.textContent = state.rel;
+  pillMode.textContent = MODE;
+  pillTurns.textContent = state.turns;
+  pillTopic.textContent = state.topic ? state.topic : "—";
+  debugToggle.classList.toggle("on", !!state.debug);
+}
+updatePills();
+
+function scrollToBottom(){
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function addBubble(text, who="jade"){
+  const div = document.createElement("div");
+  div.className = "bubble " + (who==="user" ? "user" : who==="sys" ? "sys" : who==="debug" ? "debug" : "");
+  div.textContent = text;
+  chatEl.appendChild(div);
+  scrollToBottom();
+}
+
+function dbg(text){
+  if(!state.debug) return;
+  addBubble("[debug] " + text, "debug");
+}
+
+// 初回メッセージ（画面が空のときだけ）
+if(chatEl.childElementCount === 0){
+  addBubble("ジェイドが静かにこちらを見ている。", "jade");
+  dbg(`起動OK / memoryItems=${state.memory.likes.length + state.memory.facts.length} / rel=${state.rel} / turns=${state.turns} / mode=${MODE}`);
+}
+
+// ====== Helpers ======
+function normalize(s){
+  return (s||"")
+    .replace(/\s+/g," ")
+    .replace(/[　]/g," ")
+    .trim();
+}
+
+function uniqPush(arr, v){
+  if(!v) return false;
+  if(arr.includes(v)) return false;
+  arr.push(v);
+  return true;
+}
+
+/** --------
+ * Topic推定（雑でも“破綻しない”が最優先）
+ * -------- */
+function inferTopicFromText(t){
+  const s = t;
+  if(/カラオケ/.test(s)) return "カラオケ";
+  if(/歌|うた|歌う|歌唱/.test(s)) return "歌";
+  if(/料理|作る|レシピ|作って|ごはん|献立/.test(s)) return "料理";
+  if(/睡眠|寝|ねむ|夜泣き|起きる/.test(s)) return "睡眠";
+  if(/仕事|勤務|職場|シフト/.test(s)) return "仕事";
+  if(/テイルズ|アビス|ジェイド|カーティス/.test(s)) return "アビス";
+  return null;
+}
+function updateTopic(t){
+  const nt = inferTopicFromText(t);
+  if(nt){
+    // カラオケは歌のサブでもあるけど、表示はカラオケでOK
+    state.topic = nt;
+    saveState();
+    updatePills();
+    dbg(`topic更新=${state.topic}`);
+  }
+}
+
+/** --------
+ * 「好き」抽出（誤爆防止）
+ * - 例: "歌うのが好き" -> "歌う"
+ * - 例: "料理するのも好き" -> "料理"
+ * - NG: "私の好きなこと覚えてる？"（質問なので保存しない）
+ * -------- */
+function extractLike(text){
+  const s = text;
+
+  // 質問っぽいものは除外（誤爆対策）
+  if(/[？?]/.test(s)) return null;
+  if(/覚えてる|覚えてる？|覚えてる\?|記憶/.test(s)) return null;
+
+  // 代表パターン
+  // 「Xが好き」「Xのが好き」「Xするのが好き」「Xも好き」
+  let m = s.match(/(.+?)(?:するの)?(?:が|の)?好き(?:です|だ|！|!|。)?$/);
+  if(m){
+    let x = normalize(m[1]);
+    // 余計な主語を削る
+    x = x.replace(/^(私は|ぼくは|僕は|自分は|ラティスは)\s*/,"");
+    x = x.replace(/^(こと|事)\s*/,"");
+    // 「最近」などは好きではない
+    if(/最近|昨日|今日|さっき/.test(x)) return null;
+    // 末尾の助詞ゆる補正
+    x = x.replace(/(する|やる)$/,"");
+    x = normalize(x);
+    if(x.length >= 1 && x.length <= 18) return x;
   }
 
-  let state = loadJSON(STORAGE.state, defaultState);
-  let memory = loadJSON(STORAGE.memory, {
-    likes: [],      // ["歌う", "料理", ...]
-    facts: [],      // ["最近カラオケに行った", ...]
-  });
-  let chatlog = loadJSON(STORAGE.chat, []); // {role:"ai"|"user"|"debug", text:"..."}
+  // 「X好き」単体（例: "歌好き"）
+  m = s.match(/^(.+?)好き(?:！|!|。)?$/);
+  if(m){
+    let x = normalize(m[1]);
+    x = x.replace(/^(私は|ぼくは|僕は|自分は|ラティスは)\s*/,"");
+    if(x && x.length <= 18) return x;
+  }
 
-  // --------- UI helpers ----------
-  function setSwitch(on){
-    if(on){
-      $debugSwitch.classList.add("on");
-      $debugSwitch.setAttribute("aria-checked","true");
+  return null;
+}
+
+/** --------
+ * Fact抽出（軽い出来事）
+ * -------- */
+function extractFact(text){
+  const s = text;
+  if(/[？?]/.test(s)) return null;
+  // 例: 最近カラオケ行った / 昨日〜した
+  if(/最近.+(行った|した|やった|見た|食べた|作った)/.test(s)) return normalize(s);
+  if(/昨日.+(行った|した|やった|見た|食べた|作った)/.test(s)) return normalize(s);
+  return null;
+}
+
+/** --------
+ * 記憶の要約（確認用）
+ * -------- */
+function memorySummary(){
+  const likes = state.memory.likes.slice(0,8);
+  const facts = state.memory.facts.slice(0,6);
+  let out = "【記憶】\n";
+  if(likes.length){
+    out += "（好き）\n";
+    likes.forEach(v=> out += "・" + v + "\n");
+  }else{
+    out += "（好き）\n・（なし）\n";
+  }
+  if(facts.length){
+    out += "\n（最近の話）\n";
+    facts.forEach(v=> out += "・" + v + "\n");
+  }
+  return out.trim();
+}
+
+// ====== Jade Reply Logic ======
+function jadeSpeak(lines){
+  return lines.join("\n");
+}
+
+function replyToUser(userText){
+  const t = normalize(userText);
+  if(!t) return;
+
+  // turns
+  state.turns += 1;
+
+  // まずTopic更新（会話の流れの核）
+  updateTopic(t);
+
+  // 「好き」や「事実」を記憶に入れる（ただし誤爆させない）
+  const like = extractLike(t);
+  const fact = extractFact(t);
+
+  let memoryAdded = false;
+  if(like){
+    memoryAdded = uniqPush(state.memory.likes, like) || memoryAdded;
+    dbg(`like抽出=${like}`);
+  }
+  if(fact){
+    memoryAdded = uniqPush(state.memory.facts, fact) || memoryAdded;
+    dbg(`fact抽出=${fact}`);
+  }
+
+  saveState();
+  updatePills();
+
+  // ===== Intent =====
+  const asksMemory =
+    /覚えてる|覚えてる？|記憶|私の好き|好きなこと|覚えてますか/.test(t);
+
+  // 会話：ユーザー発言を表示
+  addBubble(t, "user");
+
+  // debug: 記憶ロード
+  dbg(`記憶ロードOK / rel=${state.rel} / turns=${state.turns} / mode=${MODE}`);
+
+  // ===== Response build =====
+  let res = [];
+
+  // 1) 記憶確認
+  if(asksMemory){
+    res.push("……確認ですね。");
+    res.push(memorySummary());
+    res.push("");
+    res.push("他にも、覚えておいてほしい「好き」や「最近の話」があれば、一文で教えてください。");
+    addBubble(jadeSpeak(res), "jade");
+    return;
+  }
+
+  // 2) 記憶追加の直後は、軽く反映してから自然な質問へ
+  if(memoryAdded){
+    // 反映文
+    if(like){
+      res.push(`……そういえば、${USER_NAME}は「${like}」が好き。`);
+      res.push("記憶に追加しました。");
+    }else if(fact){
+      res.push("……承知しました。");
+      res.push("今の話は記憶しておきます。");
     }else{
-      $debugSwitch.classList.remove("on");
-      $debugSwitch.setAttribute("aria-checked","false");
-    }
-  }
-
-  function updateChips(){
-    const memCount = (memory.likes?.length || 0) + (memory.facts?.length || 0);
-    $chipMemory.textContent = String(memCount);
-    $chipRel.textContent = state.rel;
-    $chipMode.textContent = state.mode;
-    $chipTurns.textContent = String(state.turns);
-    setSwitch(!!state.debug);
-  }
-
-  function scrollBottom(){
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-  }
-
-  function addBubble(role, text){
-    const div = document.createElement("div");
-    div.className = role === "user" ? "bubble user"
-                 : role === "debug" ? "debugLine"
-                 : "bubble ai";
-    div.textContent = text;
-    $chat.appendChild(div);
-  }
-
-  function pushLog(role, text){
-    chatlog.push({ role, text, t: Date.now() });
-    // keep last 200
-    if(chatlog.length > 200) chatlog = chatlog.slice(chatlog.length - 200);
-    saveJSON(STORAGE.chat, chatlog);
-  }
-
-  function debugLine(text){
-    if(!state.debug) return;
-    addBubble("debug", text);
-    pushLog("debug", text);
-  }
-
-  function normalizeText(s){
-    return (s || "").replace(/\u3000/g, " ").trim();
-  }
-
-  // --------- memory logic ----------
-  function rememberLike(raw){
-    // 「歌うのが好き」 → "歌う"
-    // 「料理をするのも好き」 → "料理をする"
-    const t = normalizeText(raw);
-    const m = t.match(/(.+?)\s*(?:が|を)?\s*好き/);
-    let item = m ? m[1] : t;
-    item = item.replace(/(のも|のが|こと|もの)$/,"").trim();
-    if(!item) return null;
-
-    if(!memory.likes.includes(item)){
-      memory.likes.unshift(item);
-      memory.likes = memory.likes.slice(0, 30);
-      saveJSON(STORAGE.memory, memory);
-      return item;
-    }
-    return item; // already exists
-  }
-
-  function rememberFact(raw){
-    const t = normalizeText(raw);
-    if(!t) return null;
-    if(!memory.facts.includes(t)){
-      memory.facts.unshift(t);
-      memory.facts = memory.facts.slice(0, 30);
-      saveJSON(STORAGE.memory, memory);
-      return t;
-    }
-    return t;
-  }
-
-  function memorySummary(){
-    const likes = memory.likes || [];
-    const facts = memory.facts || [];
-    let out = "【記憶】\n";
-    if(likes.length){
-      out += "（好き）\n";
-      for(const x of likes.slice(0, 8)) out += `・${x}\n`;
-    }
-    if(facts.length){
-      out += "（最近/事実）\n";
-      for(const x of facts.slice(0, 8)) out += `・${x}\n`;
-    }
-    if(!likes.length && !facts.length){
-      out += "（まだありません）\n";
-    }
-    return out.trim();
-  }
-
-  // --------- Jade response (FREE mode, rule-based but “変”になりにくい) ----------
-  function jadeSpeak(text){
-    // 口調：丁寧・抑制・知的。相手はラティス。
-    return text;
-  }
-
-  function respondFree(userText){
-    const t = normalizeText(userText);
-
-    // 1) memory check intent
-    const wantsRecall =
-      /覚えてる\?|覚えてる？|覚えてる\!|覚えてる|記憶|メモ|思い出|前に言った|前の話/.test(t);
-
-    if(wantsRecall){
-      // 覚えてる系は「確認ですね」＋記憶表示
-      let ans = "……確認ですね。\n";
-      // 好きだけ聞かれたら likes を優先
-      if(/好き/.test(t) && (memory.likes?.length)){
-        ans += "【記憶（好き）】\n";
-        for(const x of memory.likes.slice(0, 8)) ans += `・${x}\n`;
-        ans += "\n他にも、覚えておいてほしい「好き」を一文で教えてください。";
-      }else{
-        ans += memorySummary();
-        ans += "\n\n必要なら、覚えておいてほしいことを一文で。";
-      }
-      return jadeSpeak(ans.trim());
+      res.push("……承知しました。");
     }
 
-    // 2) like pattern
-    if(/好き/.test(t)){
-      const item = rememberLike(t);
-      if(item){
-        debugLine(`[debug] 記憶追加（好き）: ${item}`);
-        return jadeSpeak(
-          `……そういえば、ラティスは「${item}」が好き。\n記憶に追加しました。\n\n……なるほど。興味深いですね。どういうところが気に入っています？`
-        );
-      }
-    }
+    // Topicに沿って深掘り
+    res.push("");
+    res.push(topicFollowUp(t));
+    addBubble(jadeSpeak(res), "jade");
+    return;
+  }
 
-    // 3) karaoke fact
+  // 3) ここからは topic を使って“流れ”を作る
+  res.push(topicResponse(t));
+  addBubble(jadeSpeak(res), "jade");
+}
+
+function topicFollowUp(t){
+  const topic = state.topic || "雑談";
+  switch(topic){
+    case "カラオケ":
+    case "歌":
+      return "……なるほど。どんな曲を歌うのが多いですか？";
+    case "料理":
+      return "……なるほど。得意料理、あるいは最近作って良かったものは？";
+    case "睡眠":
+      return "……状況を教えてください。いま困っている点は、入眠・夜間覚醒・早朝覚醒のどれです？";
+    case "仕事":
+      return "……職場の状況はどうです？ いま一番しんどい要因を一つだけ挙げるなら。";
+    case "アビス":
+      return "……話題としては悪くありません。どの場面の話をします？";
+    default:
+      return "……なるほど。もう少し詳しく聞かせてください、ラティス。";
+  }
+}
+
+function topicResponse(t){
+  const topic = state.topic || "雑談";
+
+  // 短い入力（例: 最近カラオケ行った）を、topicで補完して返す
+  if(topic === "カラオケ"){
+    // カラオケと言ったのに「曲が好き？」が連発しないよう分岐
+    if(/行った|行ってきた|行って/.test(t)){
+      return jadeSpeak([
+        "……カラオケですか。",
+        "気分転換には良い選択ですね。",
+        "何を歌いました？　あるいは、今日は「気持ちよく歌えた」曲はありましたか。"
+      ]);
+    }
+    return jadeSpeak([
+      "……カラオケの話ですね。",
+      "どんな店で、どれくらい歌いました？"
+    ]);
+  }
+
+  if(topic === "歌"){
     if(/カラオケ/.test(t)){
-      rememberFact(t);
-      debugLine(`[debug] 記憶追加（事実）: ${t}`);
-      return jadeSpeak(
-        "……なるほど。最近カラオケに行ったのですね。\n差し支えなければ、何を歌いました？"
-      );
+      state.topic = "カラオケ";
+      saveState();
+      updatePills();
+      return topicResponse(t);
     }
-
-    // 4) greeting / start
-    if(/こんばんは|おはよう|こんにちは|はじめまして/.test(t)){
-      return jadeSpeak("……こんばんは、ラティス。今日はどうしました？");
+    if(/好き/.test(t)){
+      // 「歌うのが好き」などを保存済みのはず。ここでは深掘り。
+      return jadeSpeak([
+        "……なるほど。興味深いですね。",
+        "歌うとき、いちばん気持ちが上がるのは「高音」「リズム」「歌詞」のどれです？"
+      ]);
     }
-
-    // 5) fallback (keep it natural; avoid “場合による”)
-    // If user says short fragment, ask a gentle follow-up
-    if(t.length <= 8){
-      return jadeSpeak("……承知しました。要点だけでも構いません。いま、話したいことは何でしょう、ラティス。");
-    }
-
-    return jadeSpeak("……なるほど。もう少しだけ詳しく聞かせてください、ラティス。");
+    return jadeSpeak([
+      "……話題は歌ですね。",
+      "最近よく聴く曲か、歌ってみたい曲はありますか？"
+    ]);
   }
 
-  function handleUserSend(){
-    const raw = $input.value;
-    const text = normalizeText(raw);
-    if(!text) return;
-
-    // add user bubble
-    addBubble("user", text);
-    pushLog("user", text);
-
-    // update turns
-    state.turns += 1;
-    saveJSON(STORAGE.state, state);
-    updateChips();
-
-    debugLine(`[debug] 記憶ロードOK / rel=${state.rel} / turns=${state.turns} / mode=${state.mode}`);
-
-    // response
-    let reply = "";
-    if(state.mode === "FREE"){
-      reply = respondFree(text);
-    }else{
-      reply = jadeSpeak("……（このモードは未実装です）");
+  if(topic === "料理"){
+    if(/作った|作る|レシピ|献立/.test(t)){
+      return jadeSpeak([
+        "……なるほど。家庭料理の試行錯誤は、案外“再現性”が大事です。",
+        "今日作った（作りたい）のは何です？　材料だけでも。"
+      ]);
     }
-
-    addBubble("ai", reply);
-    pushLog("ai", reply);
-
-    $input.value = "";
-    scrollBottom();
+    return jadeSpeak([
+      "……料理の話題ですね。",
+      "味の好みは「甘め」「しょっぱめ」「さっぱり」だとどれ寄りです？"
+    ]);
   }
 
-  // --------- init render ----------
-  function renderAll(){
-    $chat.innerHTML = "";
-    for(const m of chatlog){
-      addBubble(m.role === "debug" ? "debug" : m.role, m.text);
-    }
-    scrollBottom();
+  if(topic === "睡眠"){
+    return jadeSpeak([
+      "……睡眠の話題ですね。",
+      "状況を短くで構いません。就寝〜起床の流れを、時刻つきで教えてください。"
+    ]);
   }
 
-  function boot(){
-    updateChips();
-
-    // first-time greeting if no chat
-    if(chatlog.length === 0){
-      const hello = jadeSpeak("ジェイドが静かにこちらを見ている。");
-      addBubble("ai", hello);
-      pushLog("ai", hello);
-
-      debugLine(`[debug] 起動OK / memoryItems=${(memory.likes.length + memory.facts.length)} / rel=${state.rel} / turns=${state.turns} / mode=${state.mode}`);
-    }else{
-      // show boot debug if enabled
-      debugLine(`[debug] 起動OK / memoryItems=${(memory.likes.length + memory.facts.length)} / rel=${state.rel} / turns=${state.turns} / mode=${state.mode}`);
-      renderAll();
-    }
+  if(topic === "仕事"){
+    return jadeSpeak([
+      "……仕事の話題ですね。",
+      "感情は後で整理します。まず事実として、何が起きています？"
+    ]);
   }
 
-  // --------- events ----------
-  $send.addEventListener("click", handleUserSend);
-  $input.addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
-      e.preventDefault();
-      handleUserSend();
-    }
-  });
+  if(topic === "アビス"){
+    return jadeSpeak([
+      "……『アビス』の話ですね。",
+      "どの時期のジェイドを想定します？　序盤／中盤／終盤。"
+    ]);
+  }
 
-  $debugSwitch.addEventListener("click", () => {
-    state.debug = !state.debug;
-    saveJSON(STORAGE.state, state);
-    updateChips();
-    // re-render to show/hide debug lines (we keep logs; just hide by rerender)
-    if(!state.debug){
-      // when turning off, re-render without debug lines
-      $chat.innerHTML = "";
-      for(const m of chatlog){
-        if(m.role === "debug") continue;
-        addBubble(m.role, m.text);
-      }
-    }else{
-      renderAll();
-    }
-    scrollBottom();
-  });
+  // 雑談 fallback
+  return jadeSpeak([
+    "……承知しました。",
+    "要点だけで構いません。いま話したいことは何でしょう、ラティス。"
+  ]);
+}
 
-  $btnClear.addEventListener("click", () => {
-    if(!confirm("記憶（likes/facts）と会話ログをクリアします。よろしいですか？")) return;
-    memory = { likes: [], facts: [] };
-    chatlog = [];
-    state.turns = 0;
-    saveJSON(STORAGE.memory, memory);
-    saveJSON(STORAGE.chat, chatlog);
-    saveJSON(STORAGE.state, state);
-    updateChips();
-    $chat.innerHTML = "";
-    const hello = jadeSpeak("ジェイドが静かにこちらを見ている。");
-    addBubble("ai", hello);
-    pushLog("ai", hello);
-    debugLine(`[debug] 起動OK / memoryItems=0 / rel=${state.rel} / turns=${state.turns} / mode=${state.mode}`);
-    scrollBottom();
-  });
+// ===== Events =====
+sendBtn.addEventListener("click", () => {
+  const t = inputEl.value;
+  inputEl.value = "";
+  replyToUser(t);
+});
 
-  // --------- boot ----------
-  boot();
-})();
+inputEl.addEventListener("keydown", (e) => {
+  if(e.key === "Enter"){
+    e.preventDefault();
+    sendBtn.click();
+  }
+});
+
+btnClear.addEventListener("click", () => {
+  // 記憶だけをクリア（turns/topic/relは維持）
+  state.memory.likes = [];
+  state.memory.facts = [];
+  state.topic = null;
+  saveState();
+  updatePills();
+  addBubble("（記憶を消去した）", "sys");
+  dbg("memory clear OK");
+});
+
+debugToggle.addEventListener("click", () => {
+  state.debug = !state.debug;
+  saveState();
+  updatePills();
+  dbg("debug ON");
+});
+
+// iOS: 画面表示直後に最下部へ
+setTimeout(scrollToBottom, 80);
 </script>
 </body>
 </html>
